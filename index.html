@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Колесо Баланса и Задачи</title>
+  <title>Сферы Жизни по Евгении Стрелецкой</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -12,27 +12,65 @@
       background-color: var(--tg-theme-bg-color, #ffffff);
       color: var(--tg-theme-text-color, #000000);
       margin: 0;
-      padding: 16px;
+      padding: 12px;
       box-sizing: border-box;
     }
-    h2, h3 { text-align: center; margin-bottom: 12px; }
-    .chart-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
-    .sliders { margin-top: 20px; }
-    .slider-group { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-    .slider-group label { font-size: 14px; flex: 1; }
-    .slider-group input { width: 45%; }
-    .slider-group span { width: 25px; text-align: right; font-weight: bold; }
     
-    .tasks-section { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px; }
+    /* Навигация (Вкладки) */
+    .nav-tabs {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 15px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 5px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-weight: bold;
+      color: #666;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      text-align: center;
+    }
+    .tab-btn.active {
+      color: #2481cc;
+      border-bottom-color: #2481cc;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
+    .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .slider-group label { font-size: 13px; flex: 1; font-weight: 500; }
+    .slider-group input { width: 40%; }
+    .slider-group span { width: 25px; text-align: right; font-weight: bold; }
+
+    /* Вкладка: Описание сфер */
+    .info-card {
+      background: rgba(0,0,0,0.03);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid #2481cc;
+    }
+    .info-card h4 { margin: 0 0 6px 0; color: #2481cc; font-size: 15px; }
+    .info-card p { margin: 0 0 6px 0; font-size: 13px; line-height: 1.4; }
+    .info-card .warning { font-size: 12px; color: #d9534f; font-style: italic; }
+
+    /* Вкладка: Задачи */
     select, input[type="text"] {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-bottom: 8px;
       box-sizing: border-box;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
-    button {
+    .primary-btn {
       width: 100%;
       padding: 10px;
       background-color: #2481cc;
@@ -51,27 +89,58 @@
       padding: 8px;
       margin-bottom: 6px;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 13px;
     }
     .task-item.completed span { text-decoration: line-through; color: gray; }
-    .delete-btn { background: none; border: none; color: #ff4d4d; cursor: pointer; font-weight: bold; width: auto; padding: 0 5px; }
+    .delete-btn { background: none; border: none; color: #ff4d4d; cursor: pointer; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <h2>Колесо Жизненного Баланса</h2>
-  
-  <div class="chart-container">
-    <canvas id="wheelChart"></canvas>
+  <!-- Шапка с вкладками -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="openTab('wheelTab')">📊 Колесо</button>
+    <button class="tab-btn" onclick="openTab('infoTab')">📖 Описание</button>
+    <button class="tab-btn" onclick="openTab('tasksTab')">✅ Задачи</button>
   </div>
 
-  <div class="sliders" id="slidersContainer"></div>
+  <!-- Вкладка 1: Колесо баланса -->
+  <div id="wheelTab" class="tab-content active">
+    <div class="chart-container">
+      <canvas id="wheelChart"></canvas>
+    </div>
+    <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
+  </div>
 
-  <div class="tasks-section">
-    <h3>Цели и задачи по сферам</h3>
+  <!-- Вкладка 2: Описание сфер по Стрелецкой -->
+  <div id="infoTab" class="tab-content">
+    <div class="info-card">
+      <h4>1. Здоровье и Тело</h4>
+      <p><b>Суть:</b> Сон, полноценное питание, спорт, отдых, регулярный чек-ап и лечение болезней.</p>
+      <div class="warning">⚠️ Риск: Игнорирование тела прямо ведет к депрессии, паническим атакам и астении.</div>
+    </div>
+    <div class="info-card">
+      <h4>2. Деятельность и Финансы</h4>
+      <p><b>Суть:</b> Профессиональный рост, финансовая независимость, навыки и полезные проекты.</p>
+      <div class="warning">⚠️ Риск: Застой или работа на износ формируют синдром выгорания и выученную беспомощность.</div>
+    </div>
+    <div class="info-card">
+      <h4>3. Близкие отношения</h4>
+      <p><b>Суть:</b> Доверительные партнерские отношения, романтика, безопасность, физическая близость и нежность.</p>
+      <div class="warning">⚠️ Риск: Дефицит близости вызывает эмоциональное одиночество и тревожные привязанности.</div>
+    </div>
+    <div class="info-card">
+      <h4>4. Хобби и Досуг</h4>
+      <p><b>Суть:</b> Личные увлечения, эмоции, творчество, отдых без чувства вины («хочу» вместо «надо»).</p>
+      <div class="warning">⚠️ Риск: Без досуга психика лишается естественной дофаминовой подпитки.</div>
+    </div>
+  </div>
+
+  <!-- Вкладка 3: Задачи -->
+  <div id="tasksTab" class="tab-content">
     <select id="taskCategorySelect"></select>
-    <input type="text" id="taskInput" placeholder="Введите конкретную задачу...">
-    <button onclick="addTask()">Добавить задачу</button>
+    <input type="text" id="taskInput" placeholder="Введите микро-шаг на 5-10 минут...">
+    <button class="primary-btn" onclick="addTask()">Добавить шаг</button>
     <ul class="task-list" id="taskList"></ul>
   </div>
 
@@ -79,17 +148,18 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const categories = [
-      'Здоровье', 'Финансы', 'Карьера', 'Рост',
-      'Отношения', 'Яркость', 'Окружение', 'Быт'
-    ];
-    
-    let scores = JSON.parse(localStorage.getItem('wheelScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
-    let tasks = JSON.parse(localStorage.getItem('wheelTasks')) || {};
+    const categories = ['Здоровье и Тело', 'Деятельность', 'Отношения', 'Хобби и Досуг'];
+    let scores = JSON.parse(localStorage.getItem('streletskayaScores')) || [5, 5, 5, 5];
+    let tasks = JSON.parse(localStorage.getItem('streletskayaTasks')) || {};
 
-    categories.forEach(cat => {
-      if (!tasks[cat]) tasks[cat] = [];
-    });
+    categories.forEach(cat => { if (!tasks[cat]) tasks[cat] = []; });
+
+    function openTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
 
     const ctx = document.getElementById('wheelChart').getContext('2d');
     const wheelChart = new Chart(ctx, {
@@ -97,22 +167,15 @@
       data: {
         labels: categories,
         datasets: [{
-          label: 'Уровень сферы (1-10)',
+          label: 'Удовлетворенность',
           data: scores,
-          backgroundColor: 'rgba(36, 129, 204, 0.2)',
+          backgroundColor: 'rgba(36, 129, 204, 0.25)',
           borderColor: 'rgba(36, 129, 204, 1)',
-          borderWidth: 2,
-          pointBackgroundColor: 'rgba(36, 129, 204, 1)'
+          borderWidth: 2
         }]
       },
       options: {
-        scales: {
-          r: {
-            min: 0,
-            max: 10,
-            ticks: { stepSize: 2 }
-          }
-        },
+        scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
         plugins: { legend: { display: false } }
       }
     });
@@ -142,7 +205,7 @@
       document.getElementById(`val-${index}`).innerText = value;
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
-      localStorage.setItem('wheelScores', JSON.stringify(scores));
+      localStorage.setItem('streletskayaScores', JSON.stringify(scores));
     }
 
     function renderTasks() {
@@ -154,7 +217,7 @@
         const li = document.createElement('li');
         li.className = `task-item ${task.completed ? 'completed' : ''}`;
         li.innerHTML = `
-          <label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;">
+          <label style="display:flex; align-items:center; gap:8px; flex:1;">
             <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${selectedCat}', ${idx})">
             <span>${task.text}</span>
           </label>
@@ -172,19 +235,19 @@
 
       tasks[selectedCat].push({ text, completed: false });
       input.value = '';
-      localStorage.setItem('wheelTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskayaTasks', JSON.stringify(tasks));
       renderTasks();
     }
 
     function toggleTask(cat, idx) {
       tasks[cat][idx].completed = !tasks[cat][idx].completed;
-      localStorage.setItem('wheelTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskayaTasks', JSON.stringify(tasks));
       renderTasks();
     }
 
     function deleteTask(cat, idx) {
       tasks[cat].splice(idx, 1);
-      localStorage.setItem('wheelTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskayaTasks', JSON.stringify(tasks));
       renderTasks();
     }
 
