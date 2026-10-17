@@ -75,7 +75,7 @@
           updatedAt: new Date()
         });
       } catch (e) {
-        console.error("Помилка збереження у хмару: ", e);
+        console.error("Ошибка сохранения в облако: ", e);
       }
     };
 
@@ -95,7 +95,7 @@
           }
         }
       } catch (e) {
-        console.error("Помилка завантаження з хмари: ", e);
+        console.error("Ошибка загрузки из облака: ", e);
       }
     }
   </script>
@@ -144,6 +144,14 @@
       transform: scale(0.99);
       transition: backdrop-filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
     }
+
+    body {
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      opacity: 1;
+      transform: scale(1);
+      transition: backdrop-filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease, background-color 0.5s ease, color 0.5s ease;
+    }
     
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
@@ -187,12 +195,15 @@
     .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
     .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
     
+    /* Улучшенный дизайн названий сфер (без пунктира, современный аккуратный вид с иконкой информации) */
     .slider-group label {
       font-size: 13px; flex: 1; font-weight: 600; cursor: pointer;
       color: var(--text-color); display: flex; align-items: center; gap: 6px;
       transition: color 0.2s ease;
     }
-    .slider-group label:hover { color: var(--accent-color); }
+    .slider-group label:hover {
+      color: var(--accent-color);
+    }
     .slider-group label::after {
       content: 'ⓘ';
       font-size: 11px;
@@ -247,6 +258,7 @@
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
+    /* Универсальные модальные окна */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -268,14 +280,14 @@
 </head>
 <body>
 
-  <!-- Вітальне вікно -->
+  <!-- Первичное приветственное окно при первом входе (Язык + Имя) -->
   <div class="modal-overlay" id="welcomeModal">
     <div class="modal-card">
       <h3 style="text-align: center;">Вітаю! / Welcome!</h3>
       <p style="text-align: center; font-size: 12px; color: var(--subtext-color);">Оберіть мову / Choose language</p>
       
       <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <button type="button" class="primary-btn" id="langUaBtn" onclick="setInitialLang('ua')" style="background: var(--accent-color); color: #fff; border: none;">🇺🇦 Українська</button>
+        <button type="button" class="primary-btn" id="langUaBtn" onclick="setInitialLang('ua')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇺🇦 Українська</button>
         <button type="button" class="primary-btn" id="langEnBtn" onclick="setInitialLang('en')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇬🇧 English</button>
       </div>
 
@@ -286,7 +298,7 @@
     </div>
   </div>
 
-  <!-- Окно довідки -->
+  <!-- Модальное окно справки по конкретной сфере жизни -->
   <div class="modal-overlay" id="sphereInfoModal">
     <div class="modal-card">
       <h3 id="sphereModalTitle">Сфера</h3>
@@ -295,7 +307,7 @@
     </div>
   </div>
 
-  <!-- Вікно видалення завдання -->
+  <!-- Модальное окно подтверждения удаления задачи -->
   <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal-card">
       <h3 id="delModalTitle" style="color: var(--danger-color);">Видалення завдання</h3>
@@ -326,12 +338,14 @@
     </div>
   </div>
 
+  <!-- Навигация: Задачи посередине, Календарь справа -->
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
     <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab2">📝 Завдання</button>
     <button class="tab-btn" onclick="openTab(event, 'calendarTab')" id="tab3">📅 Календар</button>
   </div>
 
+  <!-- Колесо -->
   <div id="wheelTab" class="tab-content active">
     <div class="chart-container">
       <canvas id="wheelChart"></canvas>
@@ -339,6 +353,7 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
+  <!-- Вкладка Задач (посередине) -->
   <div id="tasksTab" class="tab-content">
     <div class="task-add-box" id="taskAddBox">
       <div class="input-row">
@@ -360,6 +375,7 @@
     </div>
   </div>
 
+  <!-- Вкладка Календарь (справа) с историей снизу -->
   <div id="calendarTab" class="tab-content">
     <div class="calendar-card">
       <div class="calendar-header">
@@ -387,6 +403,7 @@
   </div>
 
   <script>
+    // По умолчанию включаем украинский, если язык еще не выбран
     let currentLang = localStorage.getItem('appLang') || 'ua';
     let currentTheme = localStorage.getItem('appTheme') || 'dark';
 
@@ -426,7 +443,7 @@
           { name: '5. Відпочинок та Відновлення', desc: 'Психогігієна та профілактика емоційного вигорання.' },
           { name: '6. Здоров’я та Тіло', desc: 'Сон, харчування, спорт та увага до сигналів тіла.' },
           { name: '7. Духовність та Сенс', desc: 'Відчуття призначення та відповіді на екзистенційні питання.' },
-          { name: '8. Саморозвиток та Зростання', desc: 'Вивчення нового, розширення кругозору та робота з мисленням.' }
+          { name: '8. Саморазвиток та Зростання', desc: 'Вивчення нового, розширення кругозору та робота з мисленням.' }
         ],
         templates: {
           'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
@@ -503,43 +520,7 @@
     let historyFilterMode = '7days';
     let taskToDeleteId = null;
 
-    let wheelChart = null;
-
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('taskDueDate').value = selectedCalDayStr;
-
-      const ctx = document.getElementById('wheelChart').getContext('2d');
-      wheelChart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-          labels: translations[currentLang].categories,
-          datasets: [{
-            label: 'Рівень', data: scores,
-            backgroundColor: 'rgba(55, 151, 240, 0.35)',
-            borderColor: '#3797f0', borderWidth: 2, pointBackgroundColor: '#3797f0'
-          }]
-        },
-        options: {
-          scales: {
-            r: {
-              min: 0, max: 10, ticks: { display: false },
-              grid: { color: 'rgba(255, 255, 255, 0.25)' },
-              angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
-              pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
-            }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-
-      applyTheme();
-
-      if (!localStorage.getItem('streletskayaVisited')) {
-        document.getElementById('welcomeModal').classList.add('show');
-      } else {
-        applyLanguage();
-      }
-    });
+    document.getElementById('taskDueDate').value = selectedCalDayStr;
 
     function applySmoothTransition(updateCallback) {
       document.body.classList.add('is-blur');
@@ -549,16 +530,20 @@
       }, 250);
     }
 
+    // Проверяем первый визит: если нет метки в localStorage, показываем приветственное окно
+    function checkFirstVisit() {
+      if (!localStorage.getItem('streletskayaVisited')) {
+        document.getElementById('welcomeModal').classList.add('show');
+      } else {
+        applyLanguage();
+      }
+    }
+
     let tempChosenLang = 'ua';
     window.setInitialLang = function(lang) {
       tempChosenLang = lang;
-      document.getElementById('langUaBtn').style.background = lang === 'ua' ? 'var(--accent-color)' : 'var(--card-sub-bg)';
-      document.getElementById('langUaBtn').style.color = lang === 'ua' ? '#fff' : 'var(--text-color)';
-      document.getElementById('langUaBtn').style.border = lang === 'ua' ? 'none' : '1px solid var(--border-color)';
-      
-      document.getElementById('langEnBtn').style.background = lang === 'en' ? 'var(--accent-color)' : 'var(--card-sub-bg)';
-      document.getElementById('langEnBtn').style.color = lang === 'en' ? '#fff' : 'var(--text-color)';
-      document.getElementById('langEnBtn').style.border = lang === 'en' ? 'none' : '1px solid var(--border-color)';
+      document.getElementById('langUaBtn').style.borderColor = lang === 'ua' ? 'var(--accent-color)' : 'var(--border-color)';
+      document.getElementById('langEnBtn').style.borderColor = lang === 'en' ? 'var(--accent-color)' : 'var(--border-color)';
     };
 
     window.saveWelcomeSettings = function() {
@@ -574,6 +559,7 @@
       applyLanguage();
     };
 
+    // Окно справки по сфере
     window.openSphereInfo = function(index) {
       const t = translations[currentLang];
       const sphereData = t.descriptions[index];
@@ -671,10 +657,11 @@
       document.getElementById('delConfirmBtn').innerText = t.delConfirmBtn;
       document.getElementById('sphereCloseBtn').innerText = t.sphereCloseBtn;
 
-      if (wheelChart) {
-        wheelChart.data.labels = t.categories;
-        wheelChart.update();
-      }
+      document.getElementById('welcomePromptText').innerText = t.welcomePrompt;
+      document.getElementById('welcomeSubmitBtn').innerText = t.welcomeBtn;
+
+      wheelChart.data.labels = t.categories;
+      wheelChart.update();
       updateSlidersAndChart();
 
       const select = document.getElementById('taskCategorySelect');
@@ -688,6 +675,30 @@
       select.value = selectedIndex;
       renderTasksTab();
     }
+
+    const ctx = document.getElementById('wheelChart').getContext('2d');
+    const wheelChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Рівень', data: scores,
+          backgroundColor: 'rgba(55, 151, 240, 0.35)',
+          borderColor: '#3797f0', borderWidth: 2, pointBackgroundColor: '#3797f0'
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            min: 0, max: 10, ticks: { display: false },
+            grid: { color: 'rgba(255, 255, 255, 0.25)' },
+            angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
+            pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
 
     window.updateSlidersAndChart = function() {
       const t = translations[currentLang];
@@ -703,14 +714,11 @@
         `;
         slidersContainer.appendChild(group);
       });
-      if (wheelChart) {
-        wheelChart.data.datasets[0].data = scores;
-        wheelChart.update();
-      }
+      wheelChart.data.datasets[0].data = scores;
+      wheelChart.update();
     };
 
     function updateChartColors() {
-      if (!wheelChart) return;
       const isLight = currentTheme === 'light';
       wheelChart.options.scales.r.pointLabels.color = isLight ? '#121212' : '#ffffff';
       wheelChart.options.scales.r.grid.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
@@ -721,10 +729,8 @@
     window.updateScore = function(index, value) {
       scores[index] = Number(value);
       document.getElementById(`val-${index}`).innerText = value;
-      if (wheelChart) {
-        wheelChart.data.datasets[0].data = scores;
-        wheelChart.update();
-      }
+      wheelChart.data.datasets[0].data = scores;
+      wheelChart.update();
       window.saveUserData(scores, taskList);
     };
 
@@ -790,7 +796,6 @@
 
     function renderActiveTasks() {
       const listEl = document.getElementById('activeTaskList');
-      if (!listEl) return;
       listEl.innerHTML = '';
       const t = translations[currentLang];
       const activeList = taskList.filter(t => !t.completed);
@@ -826,11 +831,8 @@
         ? ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
         : ['January','February','March','April','May','June','July','August','September','October','November','December'];
       
-      const monthYearEl = document.getElementById('calMonthYear');
-      if (monthYearEl) monthYearEl.innerText = `${monthNames[month]} ${year}`;
-      
+      document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
       const grid = document.getElementById('calendarGrid');
-      if (!grid) return;
       grid.innerHTML = '';
 
       const dayHeads = currentLang === 'ua' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -861,23 +863,22 @@
 
       const dayTasks = taskList.filter(t => t.createdAt === selectedCalDayStr || t.completedAt === selectedCalDayStr);
       const listEl = document.getElementById('calendarTaskList');
-      if (listEl) {
-        listEl.innerHTML = '';
-        if (dayTasks.length === 0) {
-          listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyCalendar}</li>`;
-        } else {
-          dayTasks.forEach(task => {
-            const li = document.createElement('li');
-            li.className = `task-item ${task.completed ? 'completed' : ''}`;
-            li.innerHTML = `
-              <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
-              <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
-              <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
-              <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
-            `;
-            listEl.appendChild(li);
-          });
-        }
+      listEl.innerHTML = '';
+
+      if (dayTasks.length === 0) {
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyCalendar}</li>`;
+      } else {
+        dayTasks.forEach(task => {
+          const li = document.createElement('li');
+          li.className = `task-item ${task.completed ? 'completed' : ''}`;
+          li.innerHTML = `
+            <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+            <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+            <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
+            <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
+          `;
+          listEl.appendChild(li);
+        });
       }
 
       renderCalendarHistory(historyFilterMode);
@@ -886,7 +887,6 @@
     window.renderCalendarHistory = function(mode) {
       historyFilterMode = mode;
       const listEl = document.getElementById('historyTaskList');
-      if (!listEl) return;
       listEl.innerHTML = '';
       const t = translations[currentLang];
       
@@ -904,13 +904,13 @@
         completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
       } else if (mode === '6months') {
         const limitDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) + '' >= limitDate);
       } else if (mode === 'year') {
         const limitDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
       }
 
-      if (completedTasks.length === 0) {
+      if (completedTasks.includeUser === false || completedTasks.length === 0) {
         listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyHistory}</li>`;
         return;
       }
@@ -927,6 +927,9 @@
         listEl.appendChild(li);
       });
     }
+
+    applyTheme();
+    checkFirstVisit();
   </script>
 </body>
 </html>
