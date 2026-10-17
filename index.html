@@ -130,6 +130,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* Премиальный размытый фон при переходах */
     body.is-blur {
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -147,6 +148,7 @@
       transition: backdrop-filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease, background-color 0.5s ease, color 0.5s ease;
     }
     
+    /* Улучшенная верхняя панель */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 16px; padding: 6px 4px;
@@ -168,6 +170,7 @@
 
     .header-controls { display: flex; gap: 6px; align-items: center; }
     
+    /* Компактная премиальная кнопка профиля */
     .auth-box {
       display: flex; align-items: center; gap: 6px;
       background: var(--card-bg); border: 1px solid var(--border-color);
@@ -186,6 +189,7 @@
     }
     .btn-icon:active { transform: scale(0.92); }
 
+    /* Навигационные табы */
     .nav-tabs { display: flex; gap: 6px; background: var(--card-bg); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border-color); }
     .tab-btn { flex: 1; padding: 9px 4px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--subtext-color); cursor: pointer; border-radius: 8px; text-align: center; transition: all 0.2s ease; }
     .tab-btn.active { background: var(--accent-color); color: var(--accent-text); box-shadow: 0 2px 8px rgba(55, 151, 240, 0.3); }
@@ -277,6 +281,7 @@
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
+    /* Модальное окно Путеводителя */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -312,6 +317,7 @@
     </div>
   </div>
 
+  <!-- Улучшенная премиальная верхняя панель -->
   <div class="header-bar">
     <div class="app-brand">
       <div class="app-logo">🎯</div>
@@ -356,12 +362,14 @@
   <!-- Вкладка Задач -->
   <div id="tasksTab" class="tab-content">
     
+    <!-- Подвкладки -->
     <div class="sub-tabs">
       <button class="sub-tab-btn active" onclick="switchTaskSubTab(event, 'activeTasks')" id="subTabActive">📋 Задачи</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'calendarTasks')" id="subTabCalendar">📅 Календарь</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'archiveTasks')" id="subTabArchive">📂 Архив</button>
     </div>
 
+    <!-- Форма создания задачи -->
     <div class="task-add-box" id="taskAddBox">
       <div class="input-row">
         <select id="taskCategorySelect" style="flex: 1;" onchange="updateTemplates()"></select>
@@ -451,4 +459,532 @@
           }
         ],
         descriptions: [
-          { name: '1
+          { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
+          { name: '2. Семья и Близкие', desc: 'Зона эмоциональной безопасности, любви и глубокой привязанности.' },
+          { name: '3. Друзья и Окружение', desc: 'Социальный круг единомышленников и взаимная поддержка.' },
+          { name: '4. Хобби и Творчество', desc: 'Деятельность из компонента «ХОЧУ», дающая дофаминовый ресурс.' },
+          { name: '5. Отдых и Восстановление', desc: 'Психогигиена и профилактика эмоционального выгорания.' },
+          { name: '6. Здоровье и Тело', desc: 'Сон, питание, спорт и внимание к сигналам тела.' },
+          { name: '7. Духовность и Смысл', desc: 'Ощущение предназначения и ответы на экзистенциальные вопросы.' },
+          { name: '8. Саморазвитие и Рост', desc: 'Изучение нового, расширение кругозора и работа с мышлением.' }
+        ],
+        templates: {
+          'Работа': ['Очистить рабочий стол', 'Составить 3 приоритета', 'Зафиксировать достижение'],
+          'Семья': ['Написать близкому', 'Устроить общение без телефонов', 'Поблагодарить родных'],
+          'Друзья': ['Отправить другу память', 'Запланировать встречу', 'Узнать как дела'],
+          'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок', 'Заказать материалы'],
+          'Отдых': ['Цифровой детокс 10 мин', 'Побыть в тишине', 'Лечь раньше на 30 мин'],
+          'Здоровье': ['Выпить стакан воды', 'Сделать разминку', 'Записаться к врачу'],
+          'Духовность': ['Записать 3 благодарности', 'Помедитировать', 'Сделать доброе дело'],
+          'Саморазвитие': ['Прочитать 5 страниц', 'Выписать инсайт', 'Поучить слова']
+        }
+      },
+      ua: {
+        appTitleMain: 'Колесо',
+        appTitleSub: 'Балансу',
+        tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
+        subTabActive: '📋 Завдання', subTabCalendar: '📅 Календар', subTabArchive: '📂 Архів',
+        templatePlaceholder: '💡 Або оберіть з готових ідей...',
+        taskInputPlaceholder: 'Введіть назву завдання...',
+        addBtn: 'Додати завдання',
+        archOptAll: '📂 Весь час', archOptToday: '📅 За сьогодні', archOptWeek: '🗓 За 7 днів', archOptMonth: '📊 За місяць', archOptYear: '⏳ Рік тому',
+        emptyTasks: 'Список завдань порожній 👍',
+        emptyCalendar: 'Немає завдань на цю дату',
+        emptyArchive: 'В архіві порожньо',
+        calSelectedTitle: 'Завдання на обрану дату:',
+        checkTitle: 'Позначити виконаним',
+        guideBtn: '📖 Відкрити путівник (КПТ)',
+        langBtn: 'RU',
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
+        onboarding: [
+          {
+            title: '🧠 Навіщо потрібне Колесо Балансу?',
+            text: 'З погляду КПТ (когнітивно-поведінкової терапії), наш мозок часто зациклюється на одній сфері (наприклад, роботі), ігноруючи інші. Це викликає вигорання. Оцінка сфер допомагає повернути об’єктивний погляд.'
+          },
+          {
+            title: '🎯 Синдром "все або нічого"',
+            text: 'Часто ми ставимо завеликі цілі, лякаємо мозок і прокрастинуємо. Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.'
+          },
+          {
+            title: '📅 Календар та Архів перемог',
+            text: 'Фіксація навіть маленьких кроків зміцнює нові нейронні зв’язки та доводить вам, що ви рухаєтеся вперед. Почнімо!'
+          }
+        ],
+        descriptions: [
+          { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
+          { name: '2. Сім’я та Близькі', desc: 'Зона емоційної безпеки, любові та глибокої прив’язаності.' },
+          { name: '3. Друзі та Оточення', desc: 'Соціальне коло однодумців та взаємна підтримка.' },
+          { name: '4. Хобі та Творчість', desc: 'Діяльність із компонента «ХОЧУ», що дає дофаміновий ресурс.' },
+          { name: '5. Відпочинок та Відновлення', desc: 'Психогігієна та профілактика емоційного вигорання.' },
+          { name: '6. Здоров’я та Тіло', desc: 'Сон, харчування, спорт та увага до сигналів тіла.' },
+          { name: '7. Духовність та Сенс', desc: 'Відчуття призначення та відповіді на екзистенційні питання.' },
+          { name: '8. Саморазвиток та Зростання', desc: 'Вивчення нового, розширення кругозору та робота з мисленням.' }
+        ],
+        templates: {
+          'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
+          'Сім’я': ['Написати близькому', 'Спілкування без телефонів', 'Подякувати рідним'],
+          'Друзі': ['Надіслати спогад другу', 'Запланувати зустріч', 'Дізнатися справи'],
+          'Хобі': ['Приділити 10 хв хобі', 'Подивитися урок', 'Замовити матеріали'],
+          'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
+          'Здоров’я': ['Випити склянку води', 'Зробити розминку', 'Записатися до лікаря'],
+          'Духовність': ['Записати 3 вдячності', 'Помедитувати', 'Зробити добру справу'],
+          'Саморазвиток': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
+        }
+      }
+    };
+
+    let scores = JSON.parse(localStorage.getItem('streletskayaThemeScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
+    let taskList = JSON.parse(localStorage.getItem('streletskayaThemeTasksV3')) || JSON.parse(localStorage.getItem('streletskayaThemeTasksV2')) || [];
+    
+    let activeSubTab = 'activeTasks';
+    let currentCalDate = new Date();
+    let selectedCalDayStr = new Date().toISOString().split('T')[0];
+    let archiveFilterMode = 'all';
+
+    let onboardingStep = 0;
+
+    document.getElementById('taskDueDate').value = selectedCalDayStr;
+
+    function applySmoothTransition(updateCallback) {
+      document.body.classList.add('is-blur');
+      setTimeout(() => {
+        updateCallback();
+        setTimeout(() => {
+          document.body.classList.remove('is-blur');
+        }, 80);
+      }, 250);
+    }
+
+    function checkFirstVisit() {
+      const hasVisited = localStorage.getItem('streletskayaVisited');
+      if (!hasVisited) {
+        showOnboarding(false);
+      }
+    }
+
+    window.showOnboarding = function(manual = true) {
+      onboardingStep = 0;
+      updateOnboardingContent();
+      document.getElementById('onboardingModal').classList.add('show');
+      if (!manual) {
+        localStorage.setItem('streletskayaVisited', 'true');
+      }
+    };
+
+    window.nextOnboardingStep = function() {
+      const t = translations[currentLang];
+      onboardingStep++;
+      if (onboardingStep < t.onboarding.length) {
+        updateOnboardingContent();
+      } else {
+        closeOnboarding();
+      }
+    };
+
+    window.closeOnboarding = function() {
+      document.getElementById('onboardingModal').classList.remove('show');
+    };
+
+    function updateOnboardingContent() {
+      const t = translations[currentLang];
+      const stepData = t.onboarding[onboardingStep];
+      document.getElementById('onboardingStepIndicator').innerText = `${currentLang === 'ru' ? 'Шаг' : 'Крок'} ${onboardingStep + 1} ${currentLang === 'ru' ? 'из' : 'з'} ${t.onboarding.length}`;
+      document.getElementById('onboardingTitle').innerText = stepData.title;
+      document.getElementById('onboardingText').innerText = stepData.text;
+      document.getElementById('onboardingNextBtn').innerText = onboardingStep === t.onboarding.length - 1 ? (currentLang === 'ru' ? 'Начать' : 'Розпочати') : (currentLang === 'ru' ? 'Далее' : 'Далі');
+      document.getElementById('onboardingSkipBtn').innerText = currentLang === 'ru' ? 'Пропустить' : 'Пропустити';
+    }
+
+    window.openTab = function(evt, tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      evt.currentTarget.classList.add('active');
+    };
+
+    window.switchTaskSubTab = function(evt, subTabId) {
+      activeSubTab = subTabId;
+      document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+      evt.currentTarget.classList.add('active');
+
+      document.getElementById('taskAddBox').style.display = subTabId === 'calendarTasks' ? 'none' : 'block';
+
+      document.getElementById('activeTasksSection').style.display = subTabId === 'activeTasks' ? 'block' : 'none';
+      document.getElementById('calendarTasksSection').style.display = subTabId === 'calendarTasks' ? 'block' : 'none';
+      document.getElementById('archiveTasksSection').style.display = subTabId === 'archiveTasks' ? 'block' : 'none';
+
+      renderTasksTab();
+    };
+
+    window.toggleTheme = function() {
+      applySmoothTransition(() => {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('appTheme', currentTheme);
+        applyTheme();
+      });
+    };
+
+    function applyTheme() {
+      if (currentTheme === 'light') {
+        document.body.classList.add('light-theme');
+        document.getElementById('themeBtn').innerText = '☀️';
+      } else {
+        document.body.classList.remove('light-theme');
+        document.getElementById('themeBtn').innerText = '🌙';
+      }
+      updateChartColors();
+    }
+
+    window.toggleLanguage = function() {
+      applySmoothTransition(() => {
+        currentLang = currentLang === 'ru' ? 'ua' : 'ru';
+        localStorage.setItem('appLang', currentLang);
+        applyLanguage();
+      });
+    };
+
+    function applyLanguage() {
+      const t = translations[currentLang];
+      document.getElementById('appTitleMain').innerText = t.appTitleMain;
+      document.getElementById('appTitleSub').innerText = t.appTitleSub;
+      document.getElementById('tab1').innerText = t.tab1;
+      document.getElementById('tab2').innerText = t.tab2;
+      document.getElementById('tab3').innerText = t.tab3;
+      
+      document.getElementById('subTabActive').innerText = t.subTabActive;
+      document.getElementById('subTabCalendar').innerText = t.subTabCalendar;
+      document.getElementById('subTabArchive').innerText = t.subTabArchive;
+
+      document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
+      document.getElementById('addBtn').innerText = t.addBtn;
+      document.getElementById('langBtn').innerText = t.langBtn;
+      document.getElementById('guideBtn').innerText = t.guideBtn;
+
+      document.getElementById('archOptAll').innerText = t.archOptAll;
+      document.getElementById('archOptToday').innerText = t.archOptToday;
+      document.getElementById('archOptWeek').innerText = t.archOptWeek;
+      document.getElementById('archOptMonth').innerText = t.archOptMonth;
+      document.getElementById('archOptYear').innerText = t.archOptYear;
+
+      document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
+
+      const infoContainer = document.getElementById('infoCardsContainer');
+      infoContainer.innerHTML = '';
+      t.descriptions.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'info-card';
+        card.innerHTML = `<h4>${item.name}</h4><p>${item.desc}</p>`;
+        infoContainer.appendChild(card);
+      });
+
+      wheelChart.data.labels = t.categories;
+      wheelChart.update();
+
+      updateSlidersAndChart();
+
+      const select = document.getElementById('taskCategorySelect');
+      const selectedIndex = select.value || 0;
+      select.innerHTML = '';
+      t.categories.forEach((cat, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+      select.value = selectedIndex;
+
+      renderTasksTab();
+    }
+
+    const ctx = document.getElementById('wheelChart').getContext('2d');
+    const wheelChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Уровень',
+          data: scores,
+          backgroundColor: 'rgba(55, 151, 240, 0.35)',
+          borderColor: '#3797f0',
+          borderWidth: 2,
+          pointBackgroundColor: '#3797f0'
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            min: 0, max: 10,
+            ticks: { display: false },
+            grid: { color: 'rgba(255, 255, 255, 0.25)' },
+            angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
+            pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    window.updateSlidersAndChart = function() {
+      const t = translations[currentLang];
+      const slidersContainer = document.getElementById('slidersContainer');
+      slidersContainer.innerHTML = '';
+      t.categories.forEach((cat, index) => {
+        const group = document.createElement('div');
+        group.className = 'slider-group';
+        group.innerHTML = `
+          <label>${cat}</label>
+          <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
+          <span id="val-${index}">${scores[index]}</span>
+        `;
+        slidersContainer.appendChild(group);
+      });
+      wheelChart.data.datasets[0].data = scores;
+      wheelChart.update();
+    };
+
+    function updateChartColors() {
+      const isLight = currentTheme === 'light';
+      wheelChart.options.scales.r.pointLabels.color = isLight ? '#121212' : '#ffffff';
+      wheelChart.options.scales.r.grid.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
+      wheelChart.options.scales.r.angleLines.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
+      wheelChart.update();
+    }
+
+    window.updateScore = function(index, value) {
+      scores[index] = Number(value);
+      document.getElementById(`val-${index}`).innerText = value;
+      wheelChart.data.datasets[0].data = scores;
+      wheelChart.update();
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, taskList);
+      }
+    };
+
+    window.updateTemplates = function() {
+      const t = translations[currentLang];
+      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
+      const categoryName = t.categories[categoryIndex];
+      const templateSelect = document.getElementById('templateSelect');
+      
+      templateSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
+      
+      if (t.templates[categoryName]) {
+        t.templates[categoryName].forEach(tmpl => {
+          const opt = document.createElement('option');
+          opt.value = tmpl;
+          opt.textContent = tmpl;
+          templateSelect.appendChild(opt);
+        });
+      }
+    };
+
+    window.applyTemplate = function() {
+      const templateSelect = document.getElementById('templateSelect');
+      const taskInput = document.getElementById('taskInput');
+      if (templateSelect.value) {
+        taskInput.value = templateSelect.value;
+      }
+    };
+
+    window.addTask = function() {
+      const catIdx = document.getElementById('taskCategorySelect').value || 0;
+      const input = document.getElementById('taskInput');
+      const dateVal = document.getElementById('taskDueDate').value || new Date().toISOString().split('T')[0];
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      const newTask = {
+        id: Date.now().toString(),
+        text: text,
+        catIndex: Number(catIdx),
+        completed: false,
+        createdAt: dateVal,
+        completedAt: null
+      };
+
+      taskList.push(newTask);
+      input.value = '';
+      document.getElementById('templateSelect').value = '';
+
+      renderTasksTab();
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, taskList);
+      }
+    };
+
+    window.toggleTask = function(taskId) {
+      const task = taskList.find(t => t.id === taskId);
+      if (task) {
+        task.completed = !task.completed;
+        task.completedAt = task.completed ? new Date().toISOString().split('T')[0] : null;
+        renderTasksTab();
+        if (typeof window.saveUserData === 'function') {
+          window.saveUserData(scores, taskList);
+        }
+      }
+    };
+
+    window.deleteTask = function(taskId) {
+      taskList = taskList.filter(t => t.id !== taskId);
+      renderTasksTab();
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, taskList);
+      }
+    };
+
+    function renderTasksTab() {
+      updateTemplates();
+      if (activeSubTab === 'activeTasks') renderActiveTasks();
+      else if (activeSubTab === 'calendarTasks') renderCalendarView();
+      else if (activeSubTab === 'archiveTasks') renderArchiveTasks();
+    }
+
+    function renderActiveTasks() {
+      const listEl = document.getElementById('activeTaskList');
+      listEl.innerHTML = '';
+      const t = translations[currentLang];
+
+      const activeList = taskList.filter(t => !t.completed);
+
+      if (activeList.length === 0) {
+        listEl.innerHTML = `<li style="font-size:13px; color:var(--subtext-color); text-align:center; padding:15px;">${t.emptyTasks}</li>`;
+        return;
+      }
+
+      activeList.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = `
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    window.changeMonth = function(delta) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + delta);
+      renderCalendarView();
+    };
+
+    function renderCalendarView() {
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+      const t = translations[currentLang];
+
+      const monthNames = currentLang === 'ru' 
+        ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+        : ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+      
+      document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      const dayHeads = currentLang === 'ru' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] : ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+      dayHeads.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'cal-day-head';
+        div.innerText = d;
+        grid.appendChild(div);
+      });
+
+      const firstDayIdx = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDayIdx; i++) {
+        grid.appendChild(document.createElement('div'));
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const div = document.createElement('div');
+        div.className = `cal-day ${dateStr === selectedCalDayStr ? 'active' : ''}`;
+        
+        const hasDone = taskList.some(t => t.completedAt === dateStr);
+        if (hasDone) div.classList.add('has-done');
+
+        div.innerText = day;
+        div.onclick = () => {
+          selectedCalDayStr = dateStr;
+          renderCalendarView();
+        };
+        grid.appendChild(div);
+      }
+
+      const dayTasks = taskList.filter(t => t.createdAt === selectedCalDayStr || t.completedAt === selectedCalDayStr);
+      const listEl = document.getElementById('calendarTaskList');
+      listEl.innerHTML = '';
+
+      if (dayTasks.length === 0) {
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyCalendar}</li>`;
+        return;
+      }
+
+      dayTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    window.changeArchiveFilter = function(mode) {
+      archiveFilterMode = mode;
+      renderArchiveTasks();
+    };
+
+    function renderArchiveTasks() {
+      const listEl = document.getElementById('archiveTaskList');
+      listEl.innerHTML = '';
+      const t = translations[currentLang];
+
+      let completedTasks = taskList.filter(t => t.completed);
+      const now = new Date();
+
+      if (archiveFilterMode === 'today') {
+        const todayStr = now.toISOString().split('T')[0];
+        completedTasks = completedTasks.filter(t => t.completedAt === todayStr);
+      } else if (archiveFilterMode === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= weekAgo);
+      } else if (archiveFilterMode === 'month') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= monthAgo);
+      } else if (archiveFilterMode === 'year') {
+        const yearAgoStr = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().split('T')[0];
+        completedTasks = completedTasks.filter(t => t.completedAt === yearAgoStr);
+      }
+
+      if (completedTasks.length === 0) {
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:15px;">${t.emptyArchive}</li>`;
+        return;
+      }
+
+      completedTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item completed';
+        li.innerHTML = `
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text">${task.text}</span>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    applyTheme();
+    applyLanguage();
+    checkFirstVisit();
+  </script>
+</body>
+</html>
