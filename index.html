@@ -209,9 +209,7 @@
       background-color: var(--accent-color); color: var(--accent-text);
       border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;
     }
-    .danger-btn {
-      background-color: var(--danger-color); color: #fff;
-    }
+    .danger-btn { background-color: var(--danger-color); color: #fff; }
     
     .sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
     .sub-tab-btn {
@@ -249,19 +247,19 @@
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
-    /* Модальные окна */
+    /* Исправленный Overlay с абсолютным позиционированием по центру экрана */
     .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
-      z-index: 1000; padding: 16px; box-sizing: border-box;
+      z-index: 9999; padding: 16px; box-sizing: border-box;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
     .modal-overlay.show { opacity: 1; pointer-events: auto; }
     .modal-card {
       background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 16px; width: 100%; max-width: 360px; padding: 20px;
+      border-radius: 16px; width: 100%; max-width: 320px; padding: 20px;
       box-sizing: border-box; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .modal-card h3 { color: var(--accent-color); margin-top: 0; font-size: 18px; }
@@ -285,7 +283,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно подтверждения удаления задачи -->
+  <!-- Модальное окно удаления задачи (выровнено строго по центру экрана) -->
   <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal-card">
       <h3 id="delModalTitle" style="color: var(--danger-color);">Удаление задачи</h3>
@@ -316,12 +314,14 @@
     </div>
   </div>
 
+  <!-- Навигация без вкладки Архив -->
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
     <button class="tab-btn" onclick="openTab(event, 'infoTab')" id="tab2">📖 Описание</button>
     <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
   </div>
 
+  <!-- Колесо -->
   <div id="wheelTab" class="tab-content active">
     <div class="chart-container">
       <canvas id="wheelChart"></canvas>
@@ -329,6 +329,7 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
+  <!-- Описание -->
   <div id="infoTab" class="tab-content">
     <div style="margin-bottom: 12px;">
       <button class="primary-btn" onclick="showOnboarding(true)" id="guideBtn">📖 Открыть путеводитель (КПТ)</button>
@@ -336,11 +337,11 @@
     <div id="infoCardsContainer"></div>
   </div>
 
+  <!-- Вкладка Задач (Архив удален, добавлено 2 подвкладки) -->
   <div id="tasksTab" class="tab-content">
     <div class="sub-tabs">
       <button class="sub-tab-btn active" onclick="switchTaskSubTab(event, 'activeTasks')" id="subTabActive">📋 Задачи</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'calendarTasks')" id="subTabCalendar">📅 Календарь</button>
-      <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'archiveTasks')" id="subTabArchive">📂 Архив</button>
     </div>
 
     <div class="task-add-box" id="taskAddBox">
@@ -358,10 +359,12 @@
       <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить задачу</button>
     </div>
 
+    <!-- Вкладка: Активные задачи -->
     <div id="activeTasksSection">
       <ul class="task-list" id="activeTaskList"></ul>
     </div>
 
+    <!-- Вкладка: Календарь с расширенными фильтрами снизу -->
     <div id="calendarTasksSection" style="display: none;">
       <div class="calendar-card">
         <div class="calendar-header">
@@ -373,21 +376,22 @@
       </div>
       
       <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color);" id="calSelectedDateTitle">Задачи на выбранную дату:</div>
-      <ul class="task-list" id="calendarTaskList"></ul>
+      <ul class="task-list" id="calendarTaskList" style="margin-bottom: 15px;"></ul>
+
+      <!-- Выпадающий список для отображения истории за периоды снизу -->
+      <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--subtext-color);" id="calHistoryTitle">История выполненных задач:</div>
+        <select id="historyFilterSelect" onchange="renderCalendarHistory(this.value)" style="width: 100%; margin-bottom: 10px;">
+          <option value="7days" id="histOpt7Days">🗓 За последние 7 дней</option>
+          <option value="month" id="histOptMonth">📊 За последний месяц</option>
+          <option value="3months" id="histOpt3Months">⏳ За последние 3 месяца</option>
+          <option value="6months" id="histOpt6Months">📈 За полгода</option>
+          <option value="year" id="histOptYear">🏆 За год</option>
+        </select>
+        <ul class="task-list" id="historyTaskList"></ul>
+      </div>
     </div>
 
-    <div id="archiveTasksSection" style="display: none;">
-      <div style="margin-bottom: 10px;">
-        <select id="archiveFilterSelect" onchange="changeArchiveFilter(this.value)" style="width: 100%;">
-          <option value="all" id="archOptAll">📂 Все время</option>
-          <option value="today" id="archOptToday">📅 За сегодня</option>
-          <option value="week" id="archOptWeek">🗓 За 7 дней</option>
-          <option value="month" id="archOptMonth">📊 За месяц</option>
-          <option value="year" id="archOptYear">⏳ Год назад</option>
-        </select>
-      </div>
-      <ul class="task-list" id="archiveTaskList"></ul>
-    </div>
   </div>
 
   <script>
@@ -398,15 +402,15 @@
       ru: {
         appTitleMain: 'Колесо', appTitleSub: 'Баланса',
         tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
-        subTabActive: '📋 Задачи', subTabCalendar: '📅 Календарь', subTabArchive: '📂 Архив',
+        subTabActive: '📋 Задачи', subTabCalendar: '📅 Календарь',
         templatePlaceholder: '💡 Или выберите из готовых идей...',
         taskInputPlaceholder: 'Введите название задачи...',
         addBtn: 'Добавить задачу',
-        archOptAll: '📂 Все время', archOptToday: '📅 За сегодня', archOptWeek: '🗓 За 7 дней', archOptMonth: '📊 За месяц', archOptYear: '⏳ Год назад',
         emptyTasks: 'Список задач пуст 👍',
         emptyCalendar: 'Нет задач на эту дату',
-        emptyArchive: 'В архиве пусто',
+        emptyHistory: 'За этот период нет выполненных задач',
         calSelectedTitle: 'Задачи на выбранную дату:',
+        calHistoryTitle: 'История выполненных задач:',
         checkTitle: 'Отметить выполненной',
         guideBtn: '📖 Открыть путеводитель (КПТ)',
         langBtn: 'UA',
@@ -414,11 +418,16 @@
         delModalText: 'Вы уверены, что хотите удалить эту задачу?',
         delCancelBtn: 'Отмена',
         delConfirmBtn: 'Удалить',
+        histOpt7Days: '🗓 За последние 7 дней',
+        histOptMonth: '📊 За последний месяц',
+        histOpt3Months: '⏳ За последние 3 месяца',
+        histOpt6Months: '📈 За полгода',
+        histOptYear: '🏆 За год',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         onboarding: [
           { title: '🧠 Зачем нужно Колесо Баланса?', text: 'С точки зрения КПТ, наш мозг часто зацикливается на одной сфере, упуская другие. Оценка сфер помогает вернуть объективный взгляд на жизнь.' },
           { title: '🎯 Синдром "всё или ничего"', text: 'Метод микро-шагов (по 5-10 минут) снижает тревогу и активирует дофаминовую систему без перегрузки.' },
-          { title: '📅 Календарь и Архив побед', text: 'Фиксация маленьких шагов доказывает вам, что вы движетесь вперед. Начнем!' }
+          { title: '📅 Календарь и История', text: 'Фиксация маленьких шагов доказывает вам, что вы движетесь вперед. Начнем!' }
         ],
         descriptions: [
           { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
@@ -444,15 +453,15 @@
       ua: {
         appTitleMain: 'Колесо', appTitleSub: 'Балансу',
         tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
-        subTabActive: '📋 Завдання', subTabCalendar: '📅 Календар', subTabArchive: '📂 Архів',
+        subTabActive: '📋 Завдання', subTabCalendar: '📅 Календар',
         templatePlaceholder: '💡 Або оберіть з готових ідей...',
         taskInputPlaceholder: 'Введіть назву завдання...',
         addBtn: 'Додати завдання',
-        archOptAll: '📂 Весь час', archOptToday: '📅 За сьогодні', archOptWeek: '🗓 За 7 днів', archOptMonth: '📊 За місяць', archOptYear: '⏳ Рік тому',
         emptyTasks: 'Список завдань порожній 👍',
         emptyCalendar: 'Немає завдань на цю дату',
-        emptyArchive: 'В архіві порожньо',
+        emptyHistory: 'За цей період немає виконаних завдань',
         calSelectedTitle: 'Завдання на обрану дату:',
+        calHistoryTitle: 'Історія виконаних завдань:',
         checkTitle: 'Позначити виконаним',
         guideBtn: '📖 Відкрити путівник (КПТ)',
         langBtn: 'RU',
@@ -460,11 +469,16 @@
         delModalText: 'Ви впевнені, що хочете видалити це завдання?',
         delCancelBtn: 'Скасувати',
         delConfirmBtn: 'Видалити',
-        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморазвиток'],
+        histOpt7Days: '🗓 За останні 7 днів',
+        histOptMonth: '📊 За останній місяць',
+        histOpt3Months: '⏳ За останні 3 місяці',
+        histOpt6Months: '📈 За пів року',
+        histOptYear: '🏆 За рік',
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         onboarding: [
           { title: '🧠 Навіщо потрібне Колесо Балансу?', text: 'З погляду КПТ, наш мозг часто зациклюється на одній сфері. Оцінка сфер допомагає повернути об’єктивний погляд.' },
           { title: '🎯 Синдром "все або нічого"', text: 'Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.' },
-          { title: '📅 Календар та Архів перемог', text: 'Фіксація маленьких кроків доводить вам, що ви рухаєтеся вперед. Почнімо!' }
+          { title: '📅 Календар та Історія', text: 'Фіксація маленьких кроків доводить вам, що ви рухаєтеся вперед. Почнімо!' }
         ],
         descriptions: [
           { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
@@ -501,9 +515,9 @@
     let activeSubTab = 'activeTasks';
     let currentCalDate = new Date();
     let selectedCalDayStr = new Date().toISOString().split('T')[0];
-    let archiveFilterMode = 'all';
+    let historyFilterMode = '7days';
     let onboardingStep = 0;
-    let taskToDeleteId = null; // ID задачи, которую собираемся удалить
+    let taskToDeleteId = null;
 
     document.getElementById('taskDueDate').value = selectedCalDayStr;
 
@@ -539,16 +553,6 @@
       document.getElementById('onboardingModal').classList.remove('show');
     };
 
-    function updateOnboardingContent() {
-      const t = translations[currentLang];
-      const stepData = t.onboarding[onboardingStep];
-      document.getElementById('onboardingStepIndicator').innerText = `${currentLang === 'ru' ? 'Шаг' : 'Крок'} ${onboardingStep + 1} из ${t.onboarding.length}`;
-      document.getElementById('onboardingTitle').innerText = stepData.title;
-      document.getElementById('onboardingText').innerText = stepData.text;
-      document.getElementById('onboardingNextBtn').innerText = onboardingStep === t.onboarding.length - 1 ? (currentLang === 'ru' ? 'Начать' : 'Розпочати') : (currentLang === 'ru' ? 'Далее' : 'Далі');
-    }
-
-    // Управление модальным окном удаления
     window.promptDeleteTask = function(taskId) {
       taskToDeleteId = taskId;
       document.getElementById('deleteConfirmModal').classList.add('show');
@@ -582,7 +586,6 @@
       document.getElementById('taskAddBox').style.display = subTabId === 'calendarTasks' ? 'none' : 'block';
       document.getElementById('activeTasksSection').style.display = subTabId === 'activeTasks' ? 'block' : 'none';
       document.getElementById('calendarTasksSection').style.display = subTabId === 'calendarTasks' ? 'block' : 'none';
-      document.getElementById('archiveTasksSection').style.display = subTabId === 'archiveTasks' ? 'block' : 'none';
       renderTasksTab();
     };
 
@@ -622,19 +625,19 @@
       document.getElementById('tab3').innerText = t.tab3;
       document.getElementById('subTabActive').innerText = t.subTabActive;
       document.getElementById('subTabCalendar').innerText = t.subTabCalendar;
-      document.getElementById('subTabArchive').innerText = t.subTabArchive;
       document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
       document.getElementById('addBtn').innerText = t.addBtn;
       document.getElementById('langBtn').innerText = t.langBtn;
       document.getElementById('guideBtn').innerText = t.guideBtn;
-      document.getElementById('archOptAll').innerText = t.archOptAll;
-      document.getElementById('archOptToday').innerText = t.archOptToday;
-      document.getElementById('archOptWeek').innerText = t.archOptWeek;
-      document.getElementById('archOptMonth').innerText = t.archOptMonth;
-      document.getElementById('archOptYear').innerText = t.archOptYear;
       document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
+      document.getElementById('calHistoryTitle').innerText = t.calHistoryTitle;
 
-      // Тексты модалки удаления
+      document.getElementById('histOpt7Days').innerText = t.histOpt7Days;
+      document.getElementById('histOptMonth').innerText = t.histOptMonth;
+      document.getElementById('histOpt3Months').innerText = t.histOpt3Months;
+      document.getElementById('histOpt6Months').innerText = t.histOpt6Months;
+      document.getElementById('histOptYear').innerText = t.histOptYear;
+
       document.getElementById('delModalTitle').innerText = t.delModalTitle;
       document.getElementById('delModalText').innerText = t.delModalText;
       document.getElementById('delCancelBtn').innerText = t.delCancelBtn;
@@ -781,7 +784,6 @@
       updateTemplates();
       if (activeSubTab === 'activeTasks') renderActiveTasks();
       else if (activeSubTab === 'calendarTasks') renderCalendarView();
-      else if (activeSubTab === 'archiveTasks') renderArchiveTasks();
     }
 
     function renderActiveTasks() {
@@ -851,56 +853,59 @@
         grid.appendChild(div);
       }
 
+      // Задачи на выбранный день
       const dayTasks = taskList.filter(t => t.createdAt === selectedCalDayStr || t.completedAt === selectedCalDayStr);
       const listEl = document.getElementById('calendarTaskList');
       listEl.innerHTML = '';
 
       if (dayTasks.length === 0) {
         listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyCalendar}</li>`;
-        return;
+      } else {
+        dayTasks.forEach(task => {
+          const li = document.createElement('li');
+          li.className = `task-item ${task.completed ? 'completed' : ''}`;
+          li.innerHTML = `
+            <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+            <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+            <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
+            <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
+          `;
+          listEl.appendChild(li);
+        });
       }
 
-      dayTasks.forEach(task => {
-        const li = document.createElement('li');
-        li.className = `task-item ${task.completed ? 'completed' : ''}`;
-        li.innerHTML = `
-          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
-          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
-          <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
-          <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
-        `;
-        listEl.appendChild(li);
-      });
+      // Рендерим нижний блок истории по выбранному периоду
+      renderCalendarHistory(historyFilterMode);
     }
 
-    window.changeArchiveFilter = function(mode) {
-      archiveFilterMode = mode;
-      renderArchiveTasks();
-    };
-
-    function renderArchiveTasks() {
-      const listEl = document.getElementById('archiveTaskList');
+    window.renderCalendarHistory = function(mode) {
+      historyFilterMode = mode;
+      const listEl = document.getElementById('historyTaskList');
       listEl.innerHTML = '';
       const t = translations[currentLang];
-      let completedTasks = taskList.filter(t => t.completed);
+      
+      let completedTasks = taskList.filter(t => t.completed && t.completedAt);
       const now = new Date();
 
-      if (archiveFilterMode === 'today') {
-        const todayStr = now.toISOString().split('T')[0];
-        completedTasks = completedTasks.filter(t => t.completedAt === todayStr);
-      } else if (archiveFilterMode === 'week') {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= weekAgo);
-      } else if (archiveFilterMode === 'month') {
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= monthAgo);
-      } else if (archiveFilterMode === 'year') {
-        const yearAgoStr = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().split('T')[0];
-        completedTasks = completedTasks.filter(t => t.completedAt === yearAgoStr);
+      if (mode === '7days') {
+        const limitDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === 'month') {
+        const limitDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === '3months') {
+        const limitDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === '6months') {
+        const limitDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === 'year') {
+        const limitDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
       }
 
       if (completedTasks.length === 0) {
-        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:15px;">${t.emptyArchive}</li>`;
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyHistory}</li>`;
         return;
       }
 
@@ -910,7 +915,7 @@
         li.innerHTML = `
           <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
-          <span class="task-text">${task.text}</span>
+          <span class="task-text">${task.text} (${task.completedAt})</span>
           <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
         `;
         listEl.appendChild(li);
