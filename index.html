@@ -170,6 +170,8 @@
       border-radius: 8px; border: 1px solid var(--border-color);
       background: var(--card-sub-bg); color: var(--text-color); font-size: 13px; outline: none;
     }
+    
+    input[type="date"] { width: 130px; text-align: center; font-size: 12px; }
 
     .primary-btn {
       width: 100%; padding: 10px;
@@ -186,8 +188,10 @@
     .sub-tab-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
 
     .task-list { list-style: none; padding: 0; margin: 0; }
+    
+    /* Исправлено во избежание наложений */
     .task-item {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 8px;
       background: var(--card-bg); padding: 10px 12px; margin-bottom: 8px;
       border-radius: 10px; font-size: 13px; border: 1px solid var(--border-color);
     }
@@ -206,13 +210,14 @@
     .task-item.completed .task-text { text-decoration: line-through; color: var(--subtext-color); }
     
     .task-cat-badge {
-      font-size: 10px; padding: 3px 8px; border-radius: 6px;
+      font-size: 10px; padding: 3px 7px; border-radius: 6px;
       background: var(--card-sub-bg); color: var(--accent-color);
       font-weight: 600; flex-shrink: 0; border: 1px solid var(--border-color);
+      white-space: nowrap;
     }
     
-    .task-text { flex: 1; word-break: break-word; }
-    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; padding: 0 4px; }
+    .task-text { flex: 1; min-width: 0; word-break: break-word; }
+    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; padding: 0 4px; flex-shrink: 0; }
 
     .calendar-card { background: var(--card-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 13px; }
@@ -221,10 +226,6 @@
     .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; }
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
-
-    .archive-filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; }
-    .chip-btn { white-space: nowrap; font-size: 11px; padding: 5px 10px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--subtext-color); cursor: pointer; }
-    .chip-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
   </style>
 </head>
 <body>
@@ -261,18 +262,18 @@
   <!-- Вкладка Задач -->
   <div id="tasksTab" class="tab-content">
     
-    <!-- Переключатель подвкладок -->
+    <!-- Подвкладки -->
     <div class="sub-tabs">
       <button class="sub-tab-btn active" onclick="switchTaskSubTab(event, 'activeTasks')" id="subTabActive">📋 Задачи</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'calendarTasks')" id="subTabCalendar">📅 Календарь</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'archiveTasks')" id="subTabArchive">📂 Архив</button>
     </div>
 
-    <!-- Форма создания задачи (скрывается на вкладке Календарь) -->
+    <!-- Форма создания задачи -->
     <div class="task-add-box" id="taskAddBox">
       <div class="input-row">
         <select id="taskCategorySelect" style="flex: 1;" onchange="updateTemplates()"></select>
-        <input type="date" id="taskDueDate" style="width: 120px;">
+        <input type="date" id="taskDueDate">
       </div>
 
       <input type="text" id="taskInput" placeholder="Введите название задачи..." style="width: 100%; margin-bottom: 8px;">
@@ -289,7 +290,7 @@
       <ul class="task-list" id="activeTaskList"></ul>
     </div>
 
-    <!-- Вкладка: Календарь (без верхней панели) -->
+    <!-- Вкладка: Календарь -->
     <div id="calendarTasksSection" style="display: none;">
       <div class="calendar-card">
         <div class="calendar-header">
@@ -304,14 +305,16 @@
       <ul class="task-list" id="calendarTaskList"></ul>
     </div>
 
-    <!-- Вкладка: Архив -->
+    <!-- Вкладка: Архив (упрощенная и лаконичная) -->
     <div id="archiveTasksSection" style="display: none;">
-      <div class="archive-filters">
-        <button class="chip-btn active" onclick="setArchiveFilter(event, 'all')" id="archAll">Все время</button>
-        <button class="chip-btn" onclick="setArchiveFilter(event, 'today')" id="archToday">Сегодня</button>
-        <button class="chip-btn" onclick="setArchiveFilter(event, 'week')" id="archWeek">За 7 дней</button>
-        <button class="chip-btn" onclick="setArchiveFilter(event, 'month')" id="archMonth">За месяц</button>
-        <button class="chip-btn" onclick="setArchiveFilter(event, 'year')" id="archYear">1 год назад</button>
+      <div style="margin-bottom: 10px;">
+        <select id="archiveFilterSelect" onchange="changeArchiveFilter(this.value)" style="width: 100%;">
+          <option value="all" id="archOptAll">📂 Все время</option>
+          <option value="today" id="archOptToday">📅 За сегодня</option>
+          <option value="week" id="archOptWeek">🗓 За 7 дней</option>
+          <option value="month" id="archOptMonth">📊 За месяц</option>
+          <option value="year" id="archOptYear">⏳ Год назад</option>
+        </select>
       </div>
 
       <ul class="task-list" id="archiveTaskList"></ul>
@@ -331,7 +334,7 @@
         templatePlaceholder: '💡 Или выберите из готовых идей...',
         taskInputPlaceholder: 'Введите название задачи...',
         addBtn: 'Добавить задачу',
-        archAll: 'Все время', archToday: 'Сегодня', archWeek: 'За 7 дней', archMonth: 'За месяц', archYear: '1 год назад',
+        archOptAll: '📂 Все время', archOptToday: '📅 За сегодня', archOptWeek: '🗓 За 7 дней', archOptMonth: '📊 За месяц', archOptYear: '⏳ Год назад',
         langBtn: '🌐 UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         descriptions: [
@@ -362,7 +365,7 @@
         templatePlaceholder: '💡 Або оберіть з готових ідей...',
         taskInputPlaceholder: 'Введіть назву завдання...',
         addBtn: 'Додати завдання',
-        archAll: 'Весь час', archToday: 'Сьогодні', archWeek: 'За 7 днів', archMonth: 'За місяць', archYear: '1 рік тому',
+        archOptAll: '📂 Весь час', archOptToday: '📅 За сьогодні', archOptWeek: '🗓 За 7 днів', archOptMonth: '📊 За місяць', archOptYear: '⏳ Рік тому',
         langBtn: '🌐 RU',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         descriptions: [
@@ -410,7 +413,6 @@
       document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
       evt.currentTarget.classList.add('active');
 
-      // Скрываем форму добавления задач на вкладке Календарь
       document.getElementById('taskAddBox').style.display = subTabId === 'calendarTasks' ? 'none' : 'block';
 
       document.getElementById('activeTasksSection').style.display = subTabId === 'activeTasks' ? 'block' : 'none';
@@ -458,11 +460,11 @@
       document.getElementById('addBtn').innerText = t.addBtn;
       document.getElementById('langBtn').innerText = t.langBtn;
 
-      document.getElementById('archAll').innerText = t.archAll;
-      document.getElementById('archToday').innerText = t.archToday;
-      document.getElementById('archWeek').innerText = t.archWeek;
-      document.getElementById('archMonth').innerText = t.archMonth;
-      document.getElementById('archYear').innerText = t.archYear;
+      document.getElementById('archOptAll').innerText = t.archOptAll;
+      document.getElementById('archOptToday').innerText = t.archOptToday;
+      document.getElementById('archOptWeek').innerText = t.archOptWeek;
+      document.getElementById('archOptMonth').innerText = t.archOptMonth;
+      document.getElementById('archOptYear').innerText = t.archOptYear;
 
       const infoContainer = document.getElementById('infoCardsContainer');
       infoContainer.innerHTML = '';
@@ -733,10 +735,8 @@
       });
     }
 
-    window.setArchiveFilter = function(evt, mode) {
+    window.changeArchiveFilter = function(mode) {
       archiveFilterMode = mode;
-      document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
-      evt.currentTarget.classList.add('active');
       renderArchiveTasks();
     };
 
