@@ -103,6 +103,7 @@
       --border-color: rgba(255, 255, 255, 0.12);
       --subtext-color: #b0b0b0;
       --success-color: #4caf50;
+      --danger-color: #ff5252;
     }
 
     body.light-theme {
@@ -115,6 +116,7 @@
       --border-color: rgba(0, 0, 0, 0.08);
       --subtext-color: #666666;
       --success-color: #2e7d32;
+      --danger-color: #d32f2f;
     }
 
     body {
@@ -207,6 +209,9 @@
       background-color: var(--accent-color); color: var(--accent-text);
       border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;
     }
+    .danger-btn {
+      background-color: var(--danger-color); color: #fff;
+    }
     
     .sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
     .sub-tab-btn {
@@ -244,6 +249,7 @@
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
+    /* Модальные окна */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -266,6 +272,7 @@
 </head>
 <body>
 
+  <!-- Путеводитель / Онбординг -->
   <div class="modal-overlay" id="onboardingModal">
     <div class="modal-card">
       <div class="modal-steps" id="onboardingStepIndicator">Шаг 1 из 3</div>
@@ -274,6 +281,18 @@
       <div class="modal-buttons">
         <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="onboardingSkipBtn" onclick="closeOnboarding()">Пропустить</button>
         <button class="primary-btn" style="flex:1; margin-bottom:0;" id="onboardingNextBtn" onclick="nextOnboardingStep()">Далее</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно подтверждения удаления задачи -->
+  <div class="modal-overlay" id="deleteConfirmModal">
+    <div class="modal-card">
+      <h3 id="delModalTitle" style="color: var(--danger-color);">Удаление задачи</h3>
+      <p id="delModalText">Вы уверены, что хотите удалить эту задачу?</p>
+      <div class="modal-buttons">
+        <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="delCancelBtn" onclick="closeDeleteModal()">Отмена</button>
+        <button class="primary-btn danger-btn" style="flex:1; margin-bottom:0;" id="delConfirmBtn" onclick="confirmDeleteTask()">Удалить</button>
       </div>
     </div>
   </div>
@@ -391,6 +410,10 @@
         checkTitle: 'Отметить выполненной',
         guideBtn: '📖 Открыть путеводитель (КПТ)',
         langBtn: 'UA',
+        delModalTitle: 'Удаление задачи',
+        delModalText: 'Вы уверены, что хотите удалить эту задачу?',
+        delCancelBtn: 'Отмена',
+        delConfirmBtn: 'Удалить',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         onboarding: [
           { title: '🧠 Зачем нужно Колесо Баланса?', text: 'С точки зрения КПТ, наш мозг часто зацикливается на одной сфере, упуская другие. Оценка сфер помогает вернуть объективный взгляд на жизнь.' },
@@ -433,6 +456,10 @@
         checkTitle: 'Позначити виконаним',
         guideBtn: '📖 Відкрити путівник (КПТ)',
         langBtn: 'RU',
+        delModalTitle: 'Видалення завдання',
+        delModalText: 'Ви впевнені, що хочете видалити це завдання?',
+        delCancelBtn: 'Скасувати',
+        delConfirmBtn: 'Видалити',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморазвиток'],
         onboarding: [
           { title: '🧠 Навіщо потрібне Колесо Балансу?', text: 'З погляду КПТ, наш мозг часто зациклюється на одній сфері. Оцінка сфер допомагає повернути об’єктивний погляд.' },
@@ -462,18 +489,13 @@
       }
     };
 
-    // БУФЕР ВОССТАНОВЛЕНИЯ: Объединяем старые и новые ключи памяти без потерь
     let scores = JSON.parse(localStorage.getItem('streletskayaThemeScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
     
     let tasksV3 = JSON.parse(localStorage.getItem('streletskayaThemeTasksV3')) || [];
     let tasksV2 = JSON.parse(localStorage.getItem('streletskayaThemeTasksV2')) || [];
-    
-    // Сливаем всё в один массив по уникальному ID
     let taskMap = new Map();
     [...tasksV2, ...tasksV3].forEach(t => { if(t && t.id) taskMap.set(t.id, t); });
     let taskList = Array.from(taskMap.values());
-    
-    // Сохраняем объединенный результат обратно в основной ключ V3
     localStorage.setItem('streletskayaThemeTasksV3', JSON.stringify(taskList));
 
     let activeSubTab = 'activeTasks';
@@ -481,6 +503,7 @@
     let selectedCalDayStr = new Date().toISOString().split('T')[0];
     let archiveFilterMode = 'all';
     let onboardingStep = 0;
+    let taskToDeleteId = null; // ID задачи, которую собираемся удалить
 
     document.getElementById('taskDueDate').value = selectedCalDayStr;
 
@@ -524,6 +547,26 @@
       document.getElementById('onboardingText').innerText = stepData.text;
       document.getElementById('onboardingNextBtn').innerText = onboardingStep === t.onboarding.length - 1 ? (currentLang === 'ru' ? 'Начать' : 'Розпочати') : (currentLang === 'ru' ? 'Далее' : 'Далі');
     }
+
+    // Управление модальным окном удаления
+    window.promptDeleteTask = function(taskId) {
+      taskToDeleteId = taskId;
+      document.getElementById('deleteConfirmModal').classList.add('show');
+    };
+
+    window.closeDeleteModal = function() {
+      taskToDeleteId = null;
+      document.getElementById('deleteConfirmModal').classList.remove('show');
+    };
+
+    window.confirmDeleteTask = function() {
+      if (taskToDeleteId) {
+        taskList = taskList.filter(t => t.id !== taskToDeleteId);
+        renderTasksTab();
+        window.saveUserData(scores, taskList);
+      }
+      closeDeleteModal();
+    };
 
     window.openTab = function(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -590,6 +633,12 @@
       document.getElementById('archOptMonth').innerText = t.archOptMonth;
       document.getElementById('archOptYear').innerText = t.archOptYear;
       document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
+
+      // Тексты модалки удаления
+      document.getElementById('delModalTitle').innerText = t.delModalTitle;
+      document.getElementById('delModalText').innerText = t.delModalText;
+      document.getElementById('delCancelBtn').innerText = t.delCancelBtn;
+      document.getElementById('delConfirmBtn').innerText = t.delConfirmBtn;
 
       const infoContainer = document.getElementById('infoCardsContainer');
       infoContainer.innerHTML = '';
@@ -728,12 +777,6 @@
       }
     };
 
-    window.deleteTask = function(taskId) {
-      taskList = taskList.filter(t => t.id !== taskId);
-      renderTasksTab();
-      window.saveUserData(scores, taskList);
-    };
-
     function renderTasksTab() {
       updateTemplates();
       if (activeSubTab === 'activeTasks') renderActiveTasks();
@@ -759,7 +802,7 @@
           <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
           <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
-          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+          <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
         `;
         listEl.appendChild(li);
       });
@@ -824,7 +867,7 @@
           <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
           <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
-          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+          <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
         `;
         listEl.appendChild(li);
       });
@@ -868,7 +911,7 @@
           <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
           <span class="task-text">${task.text}</span>
-          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+          <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
         `;
         listEl.appendChild(li);
       });
