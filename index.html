@@ -1,535 +1,199 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Колесо Баланса по Е. Стрелецкой</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    // Ваши конфигурированные ключи Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyAdypqxdS_w2bp_ubPg4_9YoNXq7HLIBIE",
-      authDomain: "life-wheel-5e119.firebaseapp.com",
-      projectId: "life-wheel-5e119",
-      storageBucket: "life-wheel-5e119.firebasestorage.app",
-      messagingSenderId: "1044261685647",
-      appId: "1:1044261685647:web:350a3d2f821c4052e0e3fa",
-      measurementId: "G-RM1ZL6WJ4Q"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-
-    window.loginWithGoogle = function() {
-      signInWithPopup(auth, provider).catch((error) => console.error(error));
-    };
-
-    window.logoutFromGoogle = function() {
-      signOut(auth);
-    };
-
-    onAuthStateChanged(auth, async (user) => {
-      const authBtn = document.getElementById('authBtn');
-      const userAvatar = document.getElementById('userAvatar');
-      
-      if (user) {
-        authBtn.innerText = `Выйти (${user.displayName.split(' ')[0]})`;
-        authBtn.onclick = window.logoutFromGoogle;
-        if(user.photoURL) {
-          userAvatar.src = user.photoURL;
-          userAvatar.style.display = 'block';
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колесо Баланса</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #ffffff;
+            --text-muted: #aaaaaa;
+            --accent-color: #3b82f6;
+            --border-color: #333333;
         }
-        await loadUserData(user.uid);
-      } else {
-        authBtn.innerText = '🌐 Войти через Google';
-        authBtn.onclick = window.loginWithGoogle;
-        userAvatar.style.display = 'none';
-      }
-    });
 
-    window.saveUserData = async function(newScores, newTasks) {
-      const user = auth.currentUser;
-      if (!user) {
-        localStorage.setItem('streletskayaThemeScores', JSON.stringify(newScores));
-        localStorage.setItem('streletskayaThemeTasks', JSON.stringify(newTasks));
-        return;
-      }
-      try {
-        await setDoc(doc(db, "users", user.uid), {
-          scores: newScores,
-          tasks: newTasks,
-          updatedAt: new Date()
-        });
-      } catch (e) {
-        console.error("Ошибка сохранения в облако: ", e);
-      }
-    };
-
-    async function loadUserData(uid) {
-      try {
-        const docRef = doc(db, "users", uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.scores) {
-            scores = data.scores;
-            updateSlidersAndChart();
-          }
-          if (data.tasks) {
-            tasks = data.tasks;
-            renderTasks();
-          }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-      } catch (e) {
-        console.error("Ошибка загрузки из облака: ", e);
-      }
-    }
-  </script>
 
-  <style>
-    :root {
-      --bg-color: #121212;
-      --text-color: #ffffff;
-      --card-bg: #1e1e1e;
-      --accent-color: #3797f0;
-      --accent-text: #ffffff;
-      --border-color: rgba(255, 255, 255, 0.15);
-      --subtext-color: #b0b0b0;
-    }
+        header {
+            width: 100%;
+            max-width: 480px;
+            padding: 12px 16px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-    body.light-theme {
-      --bg-color: #ffffff;
-      --text-color: #121212;
-      --card-bg: #f4f5f7;
-      --accent-color: #2481cc;
-      --accent-text: #ffffff;
-      --border-color: rgba(0, 0, 0, 0.12);
-      --subtext-color: #666666;
-    }
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0; padding: 12px; box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .header-controls { display: flex; gap: 6px; align-items: center; }
-    .btn-toggle {
-      background: var(--card-bg); color: var(--text-color);
-      border: 1px solid var(--border-color); padding: 6px 10px;
-      border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer;
-    }
-    .user-avatar { width: 24px; height: 24px; border-radius: 50%; display: none; }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    .nav-tabs { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
-    .tab-btn { flex: 1; padding: 10px 2px; border: none; background: none; font-size: 12px; font-weight: bold; color: var(--subtext-color); cursor: pointer; border-bottom: 3px solid transparent; text-align: center; }
-    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+        }
 
-    .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
-    .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
-    .slider-group label { font-size: 13px; flex: 1; font-weight: 500; }
-    .slider-group input { width: 40%; accent-color: var(--accent-color); }
-    .slider-group span { width: 25px; text-align: right; font-weight: bold; color: var(--accent-color); }
+        .user-menu {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            padding: 6px 10px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-    .info-card { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); }
-    .info-card h4 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 14px; }
-    .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-color); }
+        .user-menu a {
+            color: #f87171;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
-    .progress-box { background: var(--card-bg); border-radius: 8px; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border-color); }
-    .progress-bar-bg { background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
-    .progress-bar-fill { background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s ease; }
-    .progress-text { font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; }
+        /* Навигация (вкладки) */
+        nav {
+            display: flex;
+            width: 100%;
+            max-width: 480px;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
 
-    select, input[type="text"] { width: 100%; padding: 10px; margin-bottom: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); font-size: 13px; }
-    .primary-btn { width: 100%; padding: 10px; background-color: var(--accent-color); color: var(--accent-text); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-    .filter-box { display: flex; gap: 6px; margin-bottom: 10px; }
-    .filter-btn { flex: 1; padding: 6px; font-size: 11px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--subtext-color); border-radius: 6px; cursor: pointer; }
-    .filter-btn.active { background: var(--accent-color); color: var(--accent-text); border-color: var(--accent-color); }
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid transparent;
+        }
 
-    .task-list { list-style: none; padding: 0; margin: 0; }
-    .task-item { display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); padding: 10px; margin-bottom: 6px; border-radius: 8px; font-size: 13px; border: 1px solid var(--border-color); }
-    .task-item.completed span { text-decoration: line-through; color: var(--subtext-color); }
-    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; }
-  </style>
+        nav a.active {
+            color: var(--text-color);
+            border-bottom-color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        /* Контент */
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Секция ползунков */
+        .sliders-section {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .slider-item {
+            background-color: var(--card-bg);
+            padding: 12px 14px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .slider-value {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-color);
+            height: 6px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="header-bar">
-    <span style="font-weight: bold; font-size: 14px;" id="appTitle">📊 Колесо Баланса</span>
-    <div class="header-controls">
-      <img id="userAvatar" class="user-avatar" alt="User">
-      <button class="btn-toggle" id="authBtn">🌐 Войти</button>
-      <button class="btn-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
-      <button class="btn-toggle" onclick="toggleLanguage()" id="langBtn">🌐 UA</button>
-    </div>
-  </div>
+    <header>
+        <div class="logo">Колесо Баланса</div>
+        <div class="header-controls">
+            <div class="user-menu">
+                <span>expeditedkeenness</span>
+                <a href="#">Выйти</a>
+            </div>
+            <button class="btn-icon">🌙</button>
+            <button class="btn-icon">RU</button>
+        </div>
+    </header>
 
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
-    <button class="tab-btn" onclick="openTab(event, 'infoTab')" id="tab2">📖 Описание</button>
-    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
-  </div>
+    <nav>
+        <a href="#" class="active">📊 Колесо</a>
+        <a href="#">📖 Опис</a>
+        <a href="#">✅ Задания</a>
+    </nav>
 
-  <div id="wheelTab" class="tab-content active">
-    <div class="chart-container">
-      <canvas id="wheelChart"></canvas>
-    </div>
-    <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
-  </div>
+    <div class="container">
+        <!-- Место под график Колеса -->
+        <div style="text-align: center; padding: 20px 0; color: var(--text-muted);">
+            [ График колеса баланса ]
+        </div>
 
-  <div id="infoTab" class="tab-content">
-    <div id="infoCardsContainer"></div>
-  </div>
-
-  <div id="tasksTab" class="tab-content">
-    <select id="taskCategorySelect" onchange="renderTasks()"></select>
-
-    <div class="progress-box">
-      <div class="progress-text">
-        <span id="progressLabel">Прогресс сферы</span>
-        <span id="progressPercent">0%</span>
-      </div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="progressBarFill"></div>
-      </div>
-    </div>
-
-    <select id="templateSelect" onchange="applyTemplate()">
-      <option value="" id="templatePlaceholder">💡 Выбрать микро-шаг...</option>
-    </select>
-
-    <input type="text" id="taskInput" placeholder="Или введите свою задачу...">
-    <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить микро-шаг</button>
-
-    <div class="filter-box">
-      <button class="filter-btn active" onclick="setFilter(event, 'all')" id="filterAll">Все</button>
-      <button class="filter-btn" onclick="setFilter(event, 'active')" id="filterActive">В работе</button>
-      <button class="filter-btn" onclick="setFilter(event, 'completed')" id="filterCompleted">Готово</button>
+        <div class="sliders-section">
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span>Работа</span>
+                    <span class="slider-value">6</span>
+                </div>
+                <input type="range" min="1" max="10" value="6">
+            </div>
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span>Семья</span>
+                    <span class="slider-value">8</span>
+                </div>
+                <input type="range" min="1" max="10" value="8">
+            </div>
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span>Друзья</span>
+                    <span class="slider-value">6</span>
+                </div>
+                <input type="range" min="1" max="10" value="6">
+            </div>
+        </div>
     </div>
 
-    <ul class="task-list" id="taskList"></ul>
-  </div>
-
-  <script>
-    let currentLang = localStorage.getItem('appLang') || 'ru';
-    let currentTheme = localStorage.getItem('appTheme') || 'dark';
-
-    const translations = {
-      ru: {
-        appTitle: '📊 Колесо Баланса',
-        tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
-        progressLabel: 'Прогресс сферы',
-        templatePlaceholder: '💡 Выбрать готовый микро-шаг (5-10 мин)...',
-        taskInputPlaceholder: 'Или введите свою задачу...',
-        addBtn: 'Добавить микро-шаг',
-        filterAll: 'Все', filterActive: 'В работе', filterCompleted: 'Готово',
-        langBtn: '🌐 UA',
-        categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
-        descriptions: [
-          { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
-          { name: '2. Семья и Близкие', desc: 'Зона эмоциональной безопасности, любви и глубокой привязанности.' },
-          { name: '3. Друзья и Окружение', desc: 'Социальный круг единомышленников и взаимная поддержка.' },
-          { name: '4. Хобби и Творчество', desc: 'Деятельность из компонента «ХОЧУ», дающая дофаминовый ресурс.' },
-          { name: '5. Отдых и Восстановление', desc: 'Психогигиена и профилактика эмоционального выгорания.' },
-          { name: '6. Здоровье и Тело', desc: 'Сон, питание, спорт и внимание к сигналам тела.' },
-          { name: '7. Духовность и Смысл', desc: 'Ощущение предназначения и ответы на экзистенциальные вопросы.' },
-          { name: '8. Саморазвитие и Рост', desc: 'Изучение нового, расширение кругозора и работа с мышлением.' }
-        ],
-        templates: {
-          'Работа': ['Очистить рабочий стол', 'Составить 3 приоритета', 'Зафиксировать достижение'],
-          'Семья': ['Написать близкому', 'Устроить общение без телефонов', 'Поблагодарить родных'],
-          'Друзья': ['Отправить другу память', 'Запланировать встречу', 'Узнать как дела'],
-          'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок', 'Заказать материалы'],
-          'Отдых': ['Цифровой детокс 10 мин', 'Побыть в тишине', 'Лечь раньше на 30 мин'],
-          'Здоровье': ['Выпить стакан воды', 'Сделать разминку', 'Записаться к врачу'],
-          'Духовность': ['Записать 3 благодарности', 'Помедитировать', 'Сделать доброе дело'],
-          'Саморазвитие': ['Прочитать 5 страниц', 'Выписать инсайт', 'Поучить слова']
-        }
-      },
-      ua: {
-        appTitle: '📊 Колесо Балансу',
-        tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
-        progressLabel: 'Прогрес сфери',
-        templatePlaceholder: '💡 Обрати мікро-крок (5-10 хв)...',
-        taskInputPlaceholder: 'Або введіть своє завдання...',
-        addBtn: 'Додати мікро-крок',
-        filterAll: 'Усі', filterActive: 'В роботі', filterCompleted: 'Готово',
-        langBtn: '🌐 RU',
-        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
-        descriptions: [
-          { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
-          { name: '2. Сім’я та Близькі', desc: 'Зона емоційної безпеки, любові та глибокої прив’язаності.' },
-          { name: '3. Друзі та Оточення', desc: 'Соціальне коло однодумців та взаємна підтримка.' },
-          { name: '4. Хобі та Творчість', desc: 'Діяльність із компонента «ХОЧУ», що дає дофаміновий ресурс.' },
-          { name: '5. Відпочинок та Відновлення', desc: 'Психогігієна та профілактика емоційного вигорання.' },
-          { name: '6. Здоров’я та Тіло', desc: 'Сон, харчування, спорт та увага до сигналів тіла.' },
-          { name: '7. Духовність та Сенс', desc: 'Відчуття призначення та відповіді на екзистенційні питання.' },
-          { name: '8. Саморазвиток та Зростання', desc: 'Вивчення нового, розширення кругозору та робота з мисленням.' }
-        ],
-        templates: {
-          'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
-          'Сім’я': ['Написати близькому', 'Спілкування без телефонів', 'Подякувати рідним'],
-          'Друзі': ['Надіслати спогад другу', 'Запланувати зустріч', 'Дізнатися справи'],
-          'Хобі': ['Приділити 10 хв хобі', 'Подивитися урок', 'Замовити матеріали'],
-          'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
-          'Здоров’я': ['Випити склянку води', 'Зробити розминку', 'Записатися до лікаря'],
-          'Духовність': ['Записати 3 вдячності', 'Помедитувати', 'Зробити добру справу'],
-          'Саморазвитие': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
-        }
-      }
-    };
-
-    let scores = JSON.parse(localStorage.getItem('streletskayaThemeScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
-    let tasks = JSON.parse(localStorage.getItem('streletskayaThemeTasks')) || {};
-    let currentFilter = 'all';
-
-    window.openTab = function(evt, tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      evt.currentTarget.classList.add('active');
-    };
-
-    window.toggleTheme = function() {
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('appTheme', currentTheme);
-      applyTheme();
-    };
-
-    function applyTheme() {
-      if (currentTheme === 'light') {
-        document.body.classList.add('light-theme');
-        document.getElementById('themeBtn').innerText = '☀️';
-      } else {
-        document.body.classList.remove('light-theme');
-        document.getElementById('themeBtn').innerText = '🌙';
-      }
-      updateChartColors();
-    }
-
-    window.toggleLanguage = function() {
-      currentLang = currentLang === 'ru' ? 'ua' : 'ru';
-      localStorage.setItem('appLang', currentLang);
-      applyLanguage();
-    };
-
-    function applyLanguage() {
-      const t = translations[currentLang];
-      document.getElementById('appTitle').innerText = t.appTitle;
-      document.getElementById('tab1').innerText = t.tab1;
-      document.getElementById('tab2').innerText = t.tab2;
-      document.getElementById('tab3').innerText = t.tab3;
-      document.getElementById('progressLabel').innerText = t.progressLabel;
-      document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
-      document.getElementById('addBtn').innerText = t.addBtn;
-      document.getElementById('filterAll').innerText = t.filterAll;
-      document.getElementById('filterActive').innerText = t.filterActive;
-      document.getElementById('filterCompleted').innerText = t.filterCompleted;
-      document.getElementById('langBtn').innerText = t.langBtn;
-
-      const infoContainer = document.getElementById('infoCardsContainer');
-      infoContainer.innerHTML = '';
-      t.descriptions.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'info-card';
-        card.innerHTML = `<h4>${item.name}</h4><p>${item.desc}</p>`;
-        infoContainer.appendChild(card);
-      });
-
-      wheelChart.data.labels = t.categories;
-      wheelChart.update();
-
-      updateSlidersAndChart();
-
-      const select = document.getElementById('taskCategorySelect');
-      select.innerHTML = '';
-      t.categories.forEach((cat, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        opt.textContent = cat;
-        select.appendChild(opt);
-      });
-
-      renderTasks();
-    }
-
-    const ctx = document.getElementById('wheelChart').getContext('2d');
-    const wheelChart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'Уровень',
-          data: scores,
-          backgroundColor: 'rgba(55, 151, 240, 0.35)',
-          borderColor: '#3797f0',
-          borderWidth: 2,
-          pointBackgroundColor: '#3797f0'
-        }]
-      },
-      options: {
-        scales: {
-          r: {
-            min: 0, max: 10,
-            ticks: { display: false },
-            grid: { color: 'rgba(255, 255, 255, 0.25)' },
-            angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
-            pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
-          }
-        },
-        plugins: { legend: { display: false } }
-      }
-    });
-
-    window.updateSlidersAndChart = function() {
-      const t = translations[currentLang];
-      const slidersContainer = document.getElementById('slidersContainer');
-      slidersContainer.innerHTML = '';
-      t.categories.forEach((cat, index) => {
-        const group = document.createElement('div');
-        group.className = 'slider-group';
-        group.innerHTML = `
-          <label>${cat}</label>
-          <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
-          <span id="val-${index}">${scores[index]}</span>
-        `;
-        slidersContainer.appendChild(group);
-      });
-      wheelChart.data.datasets[0].data = scores;
-      wheelChart.update();
-    };
-
-    function updateChartColors() {
-      const isLight = currentTheme === 'light';
-      wheelChart.options.scales.r.pointLabels.color = isLight ? '#121212' : '#ffffff';
-      wheelChart.options.scales.r.grid.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
-      wheelChart.options.scales.r.angleLines.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
-      wheelChart.update();
-    }
-
-    window.updateScore = function(index, value) {
-      scores[index] = Number(value);
-      document.getElementById(`val-${index}`).innerText = value;
-      wheelChart.data.datasets[0].data = scores;
-      wheelChart.update();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
-
-    function updateTemplates() {
-      const t = translations[currentLang];
-      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
-      const catNameRu = translations.ru.categories[selectIdx];
-      const tSelect = document.getElementById('templateSelect');
-      tSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
-      
-      (t.templates[catNameRu] || []).forEach(tText => {
-        const opt = document.createElement('option');
-        opt.value = tText;
-        opt.textContent = tText;
-        tSelect.appendChild(opt);
-      });
-    }
-
-    window.applyTemplate = function() {
-      const tSelect = document.getElementById('templateSelect');
-      if (tSelect.value) {
-        document.getElementById('taskInput').value = tSelect.value;
-      }
-    };
-
-    window.setFilter = function(evt, filter) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      evt.currentTarget.classList.add('active');
-      renderTasks();
-    };
-
-    window.renderTasks = function() {
-      updateTemplates();
-      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
-      const listEl = document.getElementById('taskList');
-      listEl.innerHTML = '';
-      
-      if (!tasks[selectIdx]) tasks[selectIdx] = [];
-      const catTasks = tasks[selectIdx];
-
-      const total = catTasks.length;
-      const completedCount = catTasks.filter(t => t.completed).length;
-      const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-      document.getElementById('progressPercent').innerText = percent + '%';
-      document.getElementById('progressBarFill').style.width = percent + '%';
-
-      const filteredTasks = catTasks.filter(t => {
-        if (currentFilter === 'active') return !t.completed;
-        if (currentFilter === 'completed') return t.completed;
-        return true;
-      });
-
-      filteredTasks.forEach((task, idx) => {
-        const realIdx = catTasks.indexOf(task);
-        const li = document.createElement('li');
-        li.className = `task-item ${task.completed ? 'completed' : ''}`;
-        li.innerHTML = `
-          <label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;">
-            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${selectIdx}, ${realIdx})">
-            <span>${task.text}</span>
-          </label>
-          <button class="delete-btn" onclick="deleteTask(${selectIdx}, ${realIdx})">×</button>
-        `;
-        listEl.appendChild(li);
-      });
-    };
-
-    window.addTask = function() {
-      const input = document.getElementById('taskInput');
-      const text = input.value.trim();
-      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
-      if (!text) return;
-
-      if (!tasks[selectIdx]) tasks[selectIdx] = [];
-      tasks[selectIdx].push({ text, completed: false });
-      input.value = '';
-      document.getElementById('templateSelect').value = '';
-      renderTasks();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
-
-    window.toggleTask = function(catIdx, idx) {
-      tasks[catIdx][idx].completed = !tasks[catIdx][idx].completed;
-      renderTasks();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
-
-    window.deleteTask = function(catIdx, idx) {
-      tasks[catIdx].splice(idx, 1);
-      renderTasks();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
-
-    applyTheme();
-    applyLanguage();
-  </script>
 </body>
 </html>
