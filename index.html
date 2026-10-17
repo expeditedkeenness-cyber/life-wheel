@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>8 Сфер и Потребностей по Е. Стрелецкой</title>
+  <title>Колесо баланса по Е. Стрелецкой</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -16,7 +16,7 @@
       box-sizing: border-box;
     }
     
-    /* Навигация (Вкладки) */
+    /* Вкладки */
     .nav-tabs {
       display: flex;
       justify-content: space-between;
@@ -49,20 +49,52 @@
     .slider-group input { width: 40%; }
     .slider-group span { width: 25px; text-align: right; font-weight: bold; }
 
-    /* Вкладка: Описание сфер */
+    /* Раскрывающиеся карточки в Описании */
     .info-card {
       background: rgba(0,0,0,0.03);
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       border-left: 4px solid #2481cc;
+    }
+    .info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       cursor: pointer;
     }
-    .info-card h4 { margin: 0 0 4px 0; color: #2481cc; font-size: 14px; }
-    .info-card p { margin: 0 0 4px 0; font-size: 12px; line-height: 1.4; color: #333; }
-    .info-card .risk { font-size: 11px; color: #d9534f; font-style: italic; }
+    .info-card h4 { margin: 0; color: #2481cc; font-size: 14px; }
+    .info-card p { margin: 6px 0 0 0; font-size: 12px; line-height: 1.4; color: #333; }
+    
+    .examples-container {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #ccc;
+    }
+    .examples-container.open { display: block; }
+    .example-item {
+      font-size: 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+    .add-example-btn {
+      background: #2481cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
 
-    /* Вкладка: Задачи */
+    /* Задачи */
     select, input[type="text"] {
       width: 100%;
       padding: 10px;
@@ -98,11 +130,10 @@
 </head>
 <body>
 
-  <!-- Навигация -->
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')">📊 Диаграмма</button>
-    <button class="tab-btn" onclick="openTab(event, 'infoTab')">📖 8 Сфер</button>
-    <button class="tab-btn" onclick="openTab(event, 'tasksTab')">✅ Задачи</button>
+    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')">📊 Колесо</button>
+    <button class="tab-btn" onclick="openTab(event, 'infoTab')">📖 Описание и 10 Задач</button>
+    <button class="tab-btn" onclick="openTab(event, 'tasksTab')">✅ Мои Задачи</button>
   </div>
 
   <!-- Вкладка 1: Диаграмма -->
@@ -113,55 +144,16 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
-  <!-- Вкладка 2: Описание 8 сфер по Стрелецкой -->
+  <!-- Вкладка 2: Описание сфер и 10 примеров -->
   <div id="infoTab" class="tab-content">
-    <div class="info-card">
-      <h4>1. Любовь и Принятие</h4>
-      <p>Потребность чувствовать себя нужным, любимым и ценным без необходимости заслуживать любовь.</p>
-      <div class="risk">⚠️ Дефицит: Отвержение, чувство никчемности и глубокая депрессия.</div>
-    </div>
-    <div class="info-card">
-      <h4>2. Безопасность и Защита</h4>
-      <p>Отсутствие психологического, физического и экономического насилия. Ощущение стабильности.</p>
-      <div class="risk">⚠️ Дефицит: Хроническая тревога, фобии, панические атаки.</div>
-    </div>
-    <div class="info-card">
-      <h4>3. Внимание и Общение</h4>
-      <p>Качественное совместное время, искренний интерес к вашей личности, душевные разговоры.</p>
-      <div class="risk">⚠️ Дефицит: Одиночество, депривация общения, апатия.</div>
-    </div>
-    <div class="info-card">
-      <h4>4. Физический Контакт</h4>
-      <p>Тактильная близость, объятия, нежность, ласка и комфорт физического присутствия.</p>
-      <div class="risk">⚠️ Дефицит: Тактильный голод, телесные зажимы, психосоматика.</div>
-    </div>
-    <div class="info-card">
-      <h4>5. Эмпатия и Сопереживание</h4>
-      <p>Ваши эмоции слышат, разделяют и валидируют. Вы не остаетесь один на один с болью.</p>
-      <div class="risk">⚠️ Дефицит: Чувство непонимания, изолированность, подавленный гнев.</div>
-    </div>
-    <div class="info-card">
-      <h4>6. Уважение и Признание</h4>
-      <p>Принятие ваших границ, выбора, мнений и успехов со стороны близких и общества.</p>
-      <div class="risk">⚠️ Дефицит: Заниженная самооценка, синдром самозванца, стыд.</div>
-    </div>
-    <div class="info-card">
-      <h4>7. Похвала и Благодарность</h4>
-      <p>Искреннее восхищение вашими действиями и словами, подтверждение вашей ценности.</p>
-      <div class="risk">⚠️ Дефицит: Утрата мотивации, выученная беспомощность.</div>
-    </div>
-    <div class="info-card">
-      <h4>8. Забота и Знаки внимания</h4>
-      <p>Проявление заботы через действия, помощь в быту, подарки и приятно уделенное время.</p>
-      <div class="risk">⚠️ Дефицит: Эмоциональное истощение, ощущение работы «в одну сторону».</div>
-    </div>
+    <div id="infoCardsContainer"></div>
   </div>
 
-  <!-- Вкладка 3: Задачи -->
+  <!-- Вкладка 3: Мои задачи -->
   <div id="tasksTab" class="tab-content">
     <select id="taskCategorySelect"></select>
-    <input type="text" id="taskInput" placeholder="Введите микро-шаг на 5-10 минут...">
-    <button class="primary-btn" onclick="addTask()">Добавить шаг</button>
+    <input type="text" id="taskInput" placeholder="Введите задачу...">
+    <button class="primary-btn" onclick="addTask()">Добавить задачу</button>
     <ul class="task-list" id="taskList"></ul>
   </div>
 
@@ -169,13 +161,140 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const categories = [
-      'Любовь', 'Безопасность', 'Внимание', 'Тактильность',
-      'Эмпатия', 'Уважение', 'Похвала', 'Забота'
+    const spheresData = [
+      {
+        name: 'Работа',
+        desc: 'Профессиональная самореализация, успехи, проекты и финансовое признание труда.',
+        tasks: [
+          'Составить список 3 главных рабочих приоритетов на неделю',
+          'Делегировать 1 рутинную задачу',
+          'Очистить рабочий стол и входящие письма',
+          'Обновить резюме или портфолио',
+          'Запросить обратную связь у руководителя или клиента',
+          'Пройти 1 короткий профессиональный урок',
+          'Оптимизировать один частый рабочий процесс',
+          'Провести 1 встречу по нетворкингу',
+          'Определить цель по доходу на ближайшие 6 месяцев',
+          'Отключить рабочие уведомления после 19:00'
+        ]
+      },
+      {
+        name: 'Семья',
+        desc: 'Качественное совместное время, поддержка, теплота и безопасность в кругу родных.',
+        tasks: [
+          'Устроить совместный ужин без телефонов',
+          'Позвонить родителям или близким родственникам',
+          'Запланировать семейный выезд на выходные',
+          'Искренне поблагодарить близкого человека за заботу',
+          'Обсудить и распределить бытовые обязанности',
+          'Сделать неприятный бытовой разговор конструктивным',
+          'Приготовить общее блюдо вместе с семьей',
+          'Устроить вечер настольных игр или кино',
+          'Сделать подарок без повода человеку из семьи',
+          'Выслушать родного человека 15 минут без советов'
+        ]
+      },
+      {
+        name: 'Друзья',
+        desc: 'Надежный социальный круг, общие интересы, доверие и легкое общение.',
+        tasks: [
+          'Написать старому другу и узнать, как его дела',
+          'Организовать встречу с друзьями в выходные',
+          'Посетить групповое мероприятие по интересам',
+          'Поддержать друга в сложной ситуации',
+          'Исключить общение с 1 токсичным человеком',
+          'Отправить другу мем или приятное воспоминание',
+          'Сделать небольшой комплимент другу',
+          'Запланировать совместную поездку с друзьями',
+          'Познакомиться с новым интересным человеком',
+          'Провести глубокий разговор по душам'
+        ]
+      },
+      {
+        name: 'Хобби',
+        desc: 'Творчество, личные увлечения и любимые занятия, приносящие чистую радость.',
+        tasks: [
+          'Выделить 30 минут на любимое увлечение',
+          'Попробовать 1 новое творческое занятие',
+          'Купить необходимые материалы для хобби',
+          'Записаться на мастер-класс или пробный урок',
+          'Посмотреть обучающее видео по своему хобби',
+          'Завершить давно начатый творческий проект',
+          'Оборудовать удобное место под хобби дома',
+          'Найти сообщество единомышленников по хобби',
+          'Сделать что-то своими руками',
+          'Поделиться результатом хобби с близкими'
+        ]
+      },
+      {
+        name: 'Отдых',
+        desc: 'Восстановление ресурса, соблюдение психогигиены и смена обстановки.',
+        tasks: [
+          'Устроить 1 час абсолютного «цифрового детокса»',
+          'Полежать в тишине или принять ванну 20 минут',
+          'Сходить на прогулку в парк без наушников',
+          'Послушать расслабляющую музыку перед сном',
+          'Запланировать полноценный выходной без дел',
+          'Лечь спать до 23:00 без телефона',
+          'Сменить обстановку на один день',
+          'Позволить себе ничего не делать 15 минут',
+          'Сходить на массаж или спа-процедуру',
+          'Почитать художественную книгу для удовольствия'
+        ]
+      },
+      {
+        name: 'Здоровье',
+        desc: 'Физическое самочувствие, режим сна, спорт, питание и медицинский контроль.',
+        tasks: [
+          'Записаться на плановый осмотр к врачу',
+          'Сделать 15-минутную разминку или зарядку',
+          'Выпить 1.5 литра чистой воды за день',
+          'Заменить фастфуд на сбалансированный обед',
+          'Пройти 8 000 шагов за день',
+          'Сдать базовые анализы крови',
+          'Купить качественные витамины после консультации',
+          'Сделать дыхательную гимнастику от стресса',
+          'Наладить стабильный режим подъема и отбоя',
+          'Ограничить употребление кофе и сахара'
+        ]
+      },
+      {
+        name: 'Духовность',
+        desc: 'Экзистенциальные ценности, понимание своего предназначения и осмысленность жизни.',
+        tasks: [
+          'Выписать 5 главных ценностей в жизни',
+          'Помедитировать или побыть в тишине 10 минут',
+          'Записать 3 вещи, за которые вы благодарны сегодня',
+          'Сделать 1 бескорыстное доброе дело',
+          'Поразмышлять над своими долгосрочными смысловыми целями',
+          'Прочитать главу философии или психологии',
+          'Определить свои личные границы',
+          'Простить давнюю обиду или отпустить ситуацию',
+          'Провести рефлексию своего поведения за неделю',
+          'Написать письмо себе в будущее'
+        ]
+      },
+      {
+        name: 'Саморазвитие',
+        desc: 'Обучение, новые навыки, расширение кругозора и работа с мышлением.',
+        tasks: [
+          'Прочитать 15 страниц полезной книги',
+          'Посмотреть 1 научно-популярную лекцию',
+          'Позаниматься иностранным языком 15 минут',
+          'Освоить 1 новую горячую клавишу или инструмент',
+          'Прослушать познавательный подкаст',
+          'Записать 3 главных инсайта за день',
+          'Поработать над 1 когнитивным искажением',
+          'Изучить новую тему из смежной сферы',
+          'Записаться на курс по развитию навыков',
+          'Разложить сложную задачу на микро-шаги'
+        ]
+      }
     ];
 
-    let scores = JSON.parse(localStorage.getItem('streletskaya8Scores')) || [5, 5, 5, 5, 5, 5, 5, 5];
-    let tasks = JSON.parse(localStorage.getItem('streletskaya8Tasks')) || {};
+    const categories = spheresData.map(s => s.name);
+    let scores = JSON.parse(localStorage.getItem('streletskayaYT8Scores')) || [5, 5, 5, 5, 5, 5, 5, 5];
+    let tasks = JSON.parse(localStorage.getItem('streletskayaYT8Tasks')) || {};
 
     categories.forEach(cat => { if (!tasks[cat]) tasks[cat] = []; });
 
@@ -186,13 +305,54 @@
       evt.currentTarget.classList.add('active');
     }
 
+    // Рендер 8 сфер и карточек примеров
+    const infoContainer = document.getElementById('infoCardsContainer');
+    spheresData.forEach((s, sIdx) => {
+      const card = document.createElement('div');
+      card.className = 'info-card';
+      
+      let examplesHTML = s.tasks.map(t => `
+        <div class="example-item">
+          <span>• ${t}</span>
+          <button class="add-example-btn" onclick="addSuggestedTask('${s.name}', '${t.replace(/'/g, "\\'")}')">+ В задачи</button>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="info-header" onclick="toggleExamples(${sIdx})">
+          <h4>${sIdx + 1}. ${s.name}</h4>
+          <span id="arrow-${sIdx}" style="font-size:12px; color:#2481cc;">▼ 10 задач</span>
+        </div>
+        <p>${s.desc}</p>
+        <div class="examples-container" id="examples-${sIdx}">
+          ${examplesHTML}
+        </div>
+      `;
+      infoContainer.appendChild(card);
+    });
+
+    function toggleExamples(idx) {
+      const el = document.getElementById(`examples-${idx}`);
+      const arrow = document.getElementById(`arrow-${idx}`);
+      el.classList.toggle('open');
+      arrow.innerText = el.classList.contains('open') ? '▲ Скрыть' : '▼ 10 задач';
+    }
+
+    function addSuggestedTask(cat, text) {
+      tasks[cat].push({ text, completed: false });
+      localStorage.setItem('streletskayaYT8Tasks', JSON.stringify(tasks));
+      alert(`Задача добавлена в сферу "${cat}"!`);
+      renderTasks();
+    }
+
+    // График Chart.js
     const ctx = document.getElementById('wheelChart').getContext('2d');
     const wheelChart = new Chart(ctx, {
       type: 'radar',
       data: {
         labels: categories,
         datasets: [{
-          label: 'Удовлетворенность',
+          label: 'Оценка сферы',
           data: scores,
           backgroundColor: 'rgba(36, 129, 204, 0.25)',
           borderColor: 'rgba(36, 129, 204, 1)',
@@ -205,7 +365,8 @@
       }
     });
 
-    const container = document.getElementById('slidersContainer');
+    // Ползунки
+    const slidersContainer = document.getElementById('slidersContainer');
     categories.forEach((cat, index) => {
       const group = document.createElement('div');
       group.className = 'slider-group';
@@ -214,7 +375,7 @@
         <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
         <span id="val-${index}">${scores[index]}</span>
       `;
-      container.appendChild(group);
+      slidersContainer.appendChild(group);
     });
 
     const select = document.getElementById('taskCategorySelect');
@@ -230,7 +391,7 @@
       document.getElementById(`val-${index}`).innerText = value;
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
-      localStorage.setItem('streletskaya8Scores', JSON.stringify(scores));
+      localStorage.setItem('streletskayaYT8Scores', JSON.stringify(scores));
     }
 
     function renderTasks() {
@@ -260,18 +421,28 @@
 
       tasks[selectedCat].push({ text, completed: false });
       input.value = '';
-      localStorage.setItem('streletskaya8Tasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskayaYT8Tasks', JSON.stringify(tasks));
       renderTasks();
     }
 
     function toggleTask(cat, idx) {
       tasks[cat][idx].completed = !tasks[cat][idx].completed;
-      localStorage.setItem('streletskaya8Tasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskayaYT8Tasks', JSON.stringify(tasks));
       renderTasks();
     }
 
     function deleteTask(cat, idx) {
       tasks[cat].splice(idx, 1);
+      localStorage.setItem('streletskayaYT8Tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    select.onchange = renderTasks;
+    renderTasks();
+  </script>
+</body>
+</html>
+;
       localStorage.setItem('streletskaya8Tasks', JSON.stringify(tasks));
       renderTasks();
     }
