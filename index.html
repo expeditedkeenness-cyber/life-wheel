@@ -56,11 +56,10 @@
 
     window.saveUserData = async function(newScores, newTaskList) {
       const user = auth.currentUser;
-      if (!user) {
-        localStorage.setItem('streletskayaThemeScores', JSON.stringify(newScores));
-        localStorage.setItem('streletskayaThemeTasksV3', JSON.stringify(newTaskList));
-        return;
-      }
+      localStorage.setItem('streletskayaThemeScores', JSON.stringify(newScores));
+      localStorage.setItem('streletskayaThemeTasksV3', JSON.stringify(newTaskList));
+
+      if (!user) return;
       try {
         await setDoc(doc(db, "users", user.uid), {
           scores: newScores,
@@ -78,15 +77,12 @@
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          if (data.scores) {
+          if (data.scores && data.scores.length > 0) {
             scores = data.scores;
             updateSlidersAndChart();
           }
-          if (data.tasksV3) {
+          if (data.tasksV3 && data.tasksV3.length > 0) {
             taskList = data.tasksV3;
-            renderTasksTab();
-          } else if (data.tasksV2) {
-            taskList = data.tasksV2;
             renderTasksTab();
           }
         }
@@ -130,7 +126,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Премиальный размытый фон при переходах */
     body.is-blur {
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -148,29 +143,21 @@
       transition: backdrop-filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease, background-color 0.5s ease, color 0.5s ease;
     }
     
-    /* Улучшенная верхняя панель */
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 16px; padding: 6px 4px;
     }
-    .app-brand {
-      display: flex; align-items: center; gap: 8px;
-    }
+    .app-brand { display: flex; align-items: center; gap: 8px; }
     .app-logo {
       width: 30px; height: 30px; background: var(--accent-color);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
       font-size: 16px; box-shadow: 0 4px 12px rgba(55, 151, 240, 0.3);
     }
-    .app-title-text {
-      font-weight: 700; font-size: 15px; letter-spacing: -0.3px; line-height: 1.1;
-    }
-    .app-subtitle-text {
-      font-weight: 500; font-size: 11px; color: var(--subtext-color);
-    }
+    .app-title-text { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; line-height: 1.1; }
+    .app-subtitle-text { font-weight: 500; font-size: 11px; color: var(--subtext-color); }
 
     .header-controls { display: flex; gap: 6px; align-items: center; }
     
-    /* Компактная премиальная кнопка профиля */
     .auth-box {
       display: flex; align-items: center; gap: 6px;
       background: var(--card-bg); border: 1px solid var(--border-color);
@@ -189,7 +176,6 @@
     }
     .btn-icon:active { transform: scale(0.92); }
 
-    /* Навигационные табы */
     .nav-tabs { display: flex; gap: 6px; background: var(--card-bg); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border-color); }
     .tab-btn { flex: 1; padding: 9px 4px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--subtext-color); cursor: pointer; border-radius: 8px; text-align: center; transition: all 0.2s ease; }
     .tab-btn.active { background: var(--accent-color); color: var(--accent-text); box-shadow: 0 2px 8px rgba(55, 151, 240, 0.3); }
@@ -202,28 +188,18 @@
     .slider-group input { width: 40%; accent-color: var(--accent-color); }
     .slider-group span { width: 25px; text-align: right; font-weight: bold; color: var(--accent-color); }
 
-    .info-card { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); transition: background 0.3s, border-color 0.3s; }
+    .info-card { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); }
     .info-card h4 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 14px; }
     .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-color); }
 
-    .task-add-box {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 15px;
-      border: 1px solid var(--border-color);
-      transition: background 0.3s, border-color 0.3s;
-    }
-    
+    .task-add-box { background: var(--card-bg); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); }
     .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
 
     select, input[type="text"], input[type="date"] {
       padding: 9px 12px; box-sizing: border-box;
       border-radius: 8px; border: 1px solid var(--border-color);
       background: var(--card-sub-bg); color: var(--text-color); font-size: 13px; outline: none;
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
-    
     input[type="date"] { width: 130px; text-align: center; font-size: 12px; }
 
     .primary-btn {
@@ -237,51 +213,37 @@
       flex: 1; padding: 8px; font-size: 12px; font-weight: 600;
       border: 1px solid var(--border-color); background: var(--card-bg);
       color: var(--subtext-color); border-radius: 8px; cursor: pointer; text-align: center;
-      transition: background 0.3s, color 0.3s;
     }
     .sub-tab-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
 
     .task-list { list-style: none; padding: 0; margin: 0; }
-    
     .task-item {
       display: flex; align-items: center; gap: 8px;
       background: var(--card-bg); padding: 10px 12px; margin-bottom: 8px;
       border-radius: 10px; font-size: 13px; border: 1px solid var(--border-color);
-      transition: background 0.3s, border-color 0.3s;
     }
-    
     .check-btn {
       width: 20px; height: 20px; border-radius: 50%;
-      border: 2px solid var(--subtext-color);
-      background: transparent; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; flex-shrink: 0;
-      padding: 0; color: transparent; font-size: 12px; transition: all 0.2s;
+      border: 2px solid var(--subtext-color); background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; color: transparent; font-size: 12px;
     }
-    .task-item.completed .check-btn {
-      background: var(--success-color); border-color: var(--success-color); color: #fff;
-    }
-
+    .task-item.completed .check-btn { background: var(--success-color); border-color: var(--success-color); color: #fff; }
     .task-item.completed .task-text { text-decoration: line-through; color: var(--subtext-color); }
-    
     .task-cat-badge {
       font-size: 10px; padding: 3px 7px; border-radius: 6px;
-      background: var(--card-sub-bg); color: var(--accent-color);
-      font-weight: 600; flex-shrink: 0; border: 1px solid var(--border-color);
-      white-space: nowrap; transition: background 0.3s, color 0.3s;
+      background: var(--card-sub-bg); color: var(--accent-color); font-weight: 600; flex-shrink: 0; border: 1px solid var(--border-color);
     }
-    
     .task-text { flex: 1; min-width: 0; word-break: break-word; }
     .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; padding: 0 4px; flex-shrink: 0; }
 
-    .calendar-card { background: var(--card-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; transition: background 0.3s; }
+    .calendar-card { background: var(--card-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; }
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 13px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; }
     .cal-day-head { font-weight: bold; color: var(--subtext-color); padding: 4px 0; }
-    .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; transition: background 0.3s; }
+    .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; }
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
-    /* Модальное окно Путеводителя */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -304,7 +266,6 @@
 </head>
 <body>
 
-  <!-- Путеводитель / Онбординг -->
   <div class="modal-overlay" id="onboardingModal">
     <div class="modal-card">
       <div class="modal-steps" id="onboardingStepIndicator">Шаг 1 из 3</div>
@@ -317,7 +278,6 @@
     </div>
   </div>
 
-  <!-- Улучшенная премиальная верхняя панель -->
   <div class="header-bar">
     <div class="app-brand">
       <div class="app-logo">🎯</div>
@@ -343,7 +303,6 @@
     <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
   </div>
 
-  <!-- Колесо -->
   <div id="wheelTab" class="tab-content active">
     <div class="chart-container">
       <canvas id="wheelChart"></canvas>
@@ -351,7 +310,6 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
-  <!-- Описание -->
   <div id="infoTab" class="tab-content">
     <div style="margin-bottom: 12px;">
       <button class="primary-btn" onclick="showOnboarding(true)" id="guideBtn">📖 Открыть путеводитель (КПТ)</button>
@@ -359,17 +317,13 @@
     <div id="infoCardsContainer"></div>
   </div>
 
-  <!-- Вкладка Задач -->
   <div id="tasksTab" class="tab-content">
-    
-    <!-- Подвкладки -->
     <div class="sub-tabs">
       <button class="sub-tab-btn active" onclick="switchTaskSubTab(event, 'activeTasks')" id="subTabActive">📋 Задачи</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'calendarTasks')" id="subTabCalendar">📅 Календарь</button>
       <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'archiveTasks')" id="subTabArchive">📂 Архив</button>
     </div>
 
-    <!-- Форма создания задачи -->
     <div class="task-add-box" id="taskAddBox">
       <div class="input-row">
         <select id="taskCategorySelect" style="flex: 1;" onchange="updateTemplates()"></select>
@@ -385,12 +339,10 @@
       <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить задачу</button>
     </div>
 
-    <!-- Вкладка: Активные задачи -->
     <div id="activeTasksSection">
       <ul class="task-list" id="activeTaskList"></ul>
     </div>
 
-    <!-- Вкладка: Календарь -->
     <div id="calendarTasksSection" style="display: none;">
       <div class="calendar-card">
         <div class="calendar-header">
@@ -405,7 +357,6 @@
       <ul class="task-list" id="calendarTaskList"></ul>
     </div>
 
-    <!-- Вкладка: Архив -->
     <div id="archiveTasksSection" style="display: none;">
       <div style="margin-bottom: 10px;">
         <select id="archiveFilterSelect" onchange="changeArchiveFilter(this.value)" style="width: 100%;">
@@ -416,10 +367,8 @@
           <option value="year" id="archOptYear">⏳ Год назад</option>
         </select>
       </div>
-
       <ul class="task-list" id="archiveTaskList"></ul>
     </div>
-
   </div>
 
   <script>
@@ -428,8 +377,7 @@
 
     const translations = {
       ru: {
-        appTitleMain: 'Колесо',
-        appTitleSub: 'Баланса',
+        appTitleMain: 'Колесо', appTitleSub: 'Баланса',
         tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
         subTabActive: '📋 Задачи', subTabCalendar: '📅 Календарь', subTabArchive: '📂 Архив',
         templatePlaceholder: '💡 Или выберите из готовых идей...',
@@ -445,18 +393,9 @@
         langBtn: 'UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         onboarding: [
-          {
-            title: '🧠 Зачем нужно Колесо Баланса?',
-            text: 'С точки зрения КПТ (когнитивно-поведенческой терапии), наш мозг часто зацикливается на одной сфере (например, на работе), упуская другие. Это приводит к когнитивным искажениям и выгоранию. Оценка сфер помогает вернуть объективный взгляд на жизнь.'
-          },
-          {
-            title: '🎯 Синдром "всё или ничего"',
-            text: 'Часто мы ставим огромные цели, пугаем мозг и прокрастинируем. Метод микро-шагов (по 5-10 минут) снижает тревогу и активирует дофаминовую систему без перегрузки.'
-          },
-          {
-            title: '📅 Календарь и Архив побед',
-            text: 'Фиксация даже маленьких выполненных шагов в календаре укрепляет новые нейронные связи и объективно доказывает вам, что вы движетесь вперед. Начнем!'
-          }
+          { title: '🧠 Зачем нужно Колесо Баланса?', text: 'С точки зрения КПТ, наш мозг часто зацикливается на одной сфере, упуская другие. Оценка сфер помогает вернуть объективный взгляд на жизнь.' },
+          { title: '🎯 Синдром "всё или ничего"', text: 'Метод микро-шагов (по 5-10 минут) снижает тревогу и активирует дофаминовую систему без перегрузки.' },
+          { title: '📅 Календарь и Архив побед', text: 'Фиксация маленьких шагов доказывает вам, что вы движетесь вперед. Начнем!' }
         ],
         descriptions: [
           { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
@@ -480,8 +419,7 @@
         }
       },
       ua: {
-        appTitleMain: 'Колесо',
-        appTitleSub: 'Балансу',
+        appTitleMain: 'Колесо', appTitleSub: 'Балансу',
         tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
         subTabActive: '📋 Завдання', subTabCalendar: '📅 Календар', subTabArchive: '📂 Архів',
         templatePlaceholder: '💡 Або оберіть з готових ідей...',
@@ -495,20 +433,11 @@
         checkTitle: 'Позначити виконаним',
         guideBtn: '📖 Відкрити путівник (КПТ)',
         langBtn: 'RU',
-        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморазвиток'],
         onboarding: [
-          {
-            title: '🧠 Навіщо потрібне Колесо Балансу?',
-            text: 'З погляду КПТ (когнітивно-поведінкової терапії), наш мозок часто зациклюється на одній сфері (наприклад, роботі), ігноруючи інші. Це викликає вигорання. Оцінка сфер допомагає повернути об’єктивний погляд.'
-          },
-          {
-            title: '🎯 Синдром "все або нічого"',
-            text: 'Часто ми ставимо завеликі цілі, лякаємо мозок і прокрастинуємо. Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.'
-          },
-          {
-            title: '📅 Календар та Архів перемог',
-            text: 'Фіксація навіть маленьких кроків зміцнює нові нейронні зв’язки та доводить вам, що ви рухаєтеся вперед. Почнімо!'
-          }
+          { title: '🧠 Навіщо потрібне Колесо Балансу?', text: 'З погляду КПТ, наш мозг часто зациклюється на одній сфері. Оцінка сфер допомагає повернути об’єктивний погляд.' },
+          { title: '🎯 Синдром "все або нічого"', text: 'Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.' },
+          { title: '📅 Календар та Архів перемог', text: 'Фіксація маленьких кроків доводить вам, що ви рухаєтеся вперед. Почнімо!' }
         ],
         descriptions: [
           { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
@@ -533,14 +462,24 @@
       }
     };
 
+    // БУФЕР ВОССТАНОВЛЕНИЯ: Объединяем старые и новые ключи памяти без потерь
     let scores = JSON.parse(localStorage.getItem('streletskayaThemeScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
-    let taskList = JSON.parse(localStorage.getItem('streletskayaThemeTasksV3')) || JSON.parse(localStorage.getItem('streletskayaThemeTasksV2')) || [];
     
+    let tasksV3 = JSON.parse(localStorage.getItem('streletskayaThemeTasksV3')) || [];
+    let tasksV2 = JSON.parse(localStorage.getItem('streletskayaThemeTasksV2')) || [];
+    
+    // Сливаем всё в один массив по уникальному ID
+    let taskMap = new Map();
+    [...tasksV2, ...tasksV3].forEach(t => { if(t && t.id) taskMap.set(t.id, t); });
+    let taskList = Array.from(taskMap.values());
+    
+    // Сохраняем объединенный результат обратно в основной ключ V3
+    localStorage.setItem('streletskayaThemeTasksV3', JSON.stringify(taskList));
+
     let activeSubTab = 'activeTasks';
     let currentCalDate = new Date();
     let selectedCalDayStr = new Date().toISOString().split('T')[0];
     let archiveFilterMode = 'all';
-
     let onboardingStep = 0;
 
     document.getElementById('taskDueDate').value = selectedCalDayStr;
@@ -549,15 +488,12 @@
       document.body.classList.add('is-blur');
       setTimeout(() => {
         updateCallback();
-        setTimeout(() => {
-          document.body.classList.remove('is-blur');
-        }, 80);
+        setTimeout(() => { document.body.classList.remove('is-blur'); }, 80);
       }, 250);
     }
 
     function checkFirstVisit() {
-      const hasVisited = localStorage.getItem('streletskayaVisited');
-      if (!hasVisited) {
+      if (!localStorage.getItem('streletskayaVisited')) {
         showOnboarding(false);
       }
     }
@@ -566,19 +502,14 @@
       onboardingStep = 0;
       updateOnboardingContent();
       document.getElementById('onboardingModal').classList.add('show');
-      if (!manual) {
-        localStorage.setItem('streletskayaVisited', 'true');
-      }
+      if (!manual) localStorage.setItem('streletskayaVisited', 'true');
     };
 
     window.nextOnboardingStep = function() {
       const t = translations[currentLang];
       onboardingStep++;
-      if (onboardingStep < t.onboarding.length) {
-        updateOnboardingContent();
-      } else {
-        closeOnboarding();
-      }
+      if (onboardingStep < t.onboarding.length) updateOnboardingContent();
+      else closeOnboarding();
     };
 
     window.closeOnboarding = function() {
@@ -588,11 +519,10 @@
     function updateOnboardingContent() {
       const t = translations[currentLang];
       const stepData = t.onboarding[onboardingStep];
-      document.getElementById('onboardingStepIndicator').innerText = `${currentLang === 'ru' ? 'Шаг' : 'Крок'} ${onboardingStep + 1} ${currentLang === 'ru' ? 'из' : 'з'} ${t.onboarding.length}`;
+      document.getElementById('onboardingStepIndicator').innerText = `${currentLang === 'ru' ? 'Шаг' : 'Крок'} ${onboardingStep + 1} из ${t.onboarding.length}`;
       document.getElementById('onboardingTitle').innerText = stepData.title;
       document.getElementById('onboardingText').innerText = stepData.text;
       document.getElementById('onboardingNextBtn').innerText = onboardingStep === t.onboarding.length - 1 ? (currentLang === 'ru' ? 'Начать' : 'Розпочати') : (currentLang === 'ru' ? 'Далее' : 'Далі');
-      document.getElementById('onboardingSkipBtn').innerText = currentLang === 'ru' ? 'Пропустить' : 'Пропустити';
     }
 
     window.openTab = function(evt, tabId) {
@@ -606,13 +536,10 @@
       activeSubTab = subTabId;
       document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
       evt.currentTarget.classList.add('active');
-
       document.getElementById('taskAddBox').style.display = subTabId === 'calendarTasks' ? 'none' : 'block';
-
       document.getElementById('activeTasksSection').style.display = subTabId === 'activeTasks' ? 'block' : 'none';
       document.getElementById('calendarTasksSection').style.display = subTabId === 'calendarTasks' ? 'block' : 'none';
       document.getElementById('archiveTasksSection').style.display = subTabId === 'archiveTasks' ? 'block' : 'none';
-
       renderTasksTab();
     };
 
@@ -650,22 +577,18 @@
       document.getElementById('tab1').innerText = t.tab1;
       document.getElementById('tab2').innerText = t.tab2;
       document.getElementById('tab3').innerText = t.tab3;
-      
       document.getElementById('subTabActive').innerText = t.subTabActive;
       document.getElementById('subTabCalendar').innerText = t.subTabCalendar;
       document.getElementById('subTabArchive').innerText = t.subTabArchive;
-
       document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
       document.getElementById('addBtn').innerText = t.addBtn;
       document.getElementById('langBtn').innerText = t.langBtn;
       document.getElementById('guideBtn').innerText = t.guideBtn;
-
       document.getElementById('archOptAll').innerText = t.archOptAll;
       document.getElementById('archOptToday').innerText = t.archOptToday;
       document.getElementById('archOptWeek').innerText = t.archOptWeek;
       document.getElementById('archOptMonth').innerText = t.archOptMonth;
       document.getElementById('archOptYear').innerText = t.archOptYear;
-
       document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
 
       const infoContainer = document.getElementById('infoCardsContainer');
@@ -679,7 +602,6 @@
 
       wheelChart.data.labels = t.categories;
       wheelChart.update();
-
       updateSlidersAndChart();
 
       const select = document.getElementById('taskCategorySelect');
@@ -687,12 +609,10 @@
       select.innerHTML = '';
       t.categories.forEach((cat, idx) => {
         const opt = document.createElement('option');
-        opt.value = idx;
-        opt.textContent = cat;
+        opt.value = idx; opt.textContent = cat;
         select.appendChild(opt);
       });
       select.value = selectedIndex;
-
       renderTasksTab();
     }
 
@@ -702,19 +622,15 @@
       data: {
         labels: [],
         datasets: [{
-          label: 'Уровень',
-          data: scores,
+          label: 'Уровень', data: scores,
           backgroundColor: 'rgba(55, 151, 240, 0.35)',
-          borderColor: '#3797f0',
-          borderWidth: 2,
-          pointBackgroundColor: '#3797f0'
+          borderColor: '#3797f0', borderWidth: 2, pointBackgroundColor: '#3797f0'
         }]
       },
       options: {
         scales: {
           r: {
-            min: 0, max: 10,
-            ticks: { display: false },
+            min: 0, max: 10, ticks: { display: false },
             grid: { color: 'rgba(255, 255, 255, 0.25)' },
             angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
             pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
@@ -755,9 +671,7 @@
       document.getElementById(`val-${index}`).innerText = value;
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, taskList);
-      }
+      window.saveUserData(scores, taskList);
     };
 
     window.updateTemplates = function() {
@@ -765,14 +679,11 @@
       const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
       const categoryName = t.categories[categoryIndex];
       const templateSelect = document.getElementById('templateSelect');
-      
       templateSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
-      
       if (t.templates[categoryName]) {
         t.templates[categoryName].forEach(tmpl => {
           const opt = document.createElement('option');
-          opt.value = tmpl;
-          opt.textContent = tmpl;
+          opt.value = tmpl; opt.textContent = tmpl;
           templateSelect.appendChild(opt);
         });
       }
@@ -781,9 +692,7 @@
     window.applyTemplate = function() {
       const templateSelect = document.getElementById('templateSelect');
       const taskInput = document.getElementById('taskInput');
-      if (templateSelect.value) {
-        taskInput.value = templateSelect.value;
-      }
+      if (templateSelect.value) taskInput.value = templateSelect.value;
     };
 
     window.addTask = function() {
@@ -791,7 +700,6 @@
       const input = document.getElementById('taskInput');
       const dateVal = document.getElementById('taskDueDate').value || new Date().toISOString().split('T')[0];
       const text = input.value.trim();
-
       if (!text) return;
 
       const newTask = {
@@ -806,11 +714,8 @@
       taskList.push(newTask);
       input.value = '';
       document.getElementById('templateSelect').value = '';
-
       renderTasksTab();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, taskList);
-      }
+      window.saveUserData(scores, taskList);
     };
 
     window.toggleTask = function(taskId) {
@@ -819,18 +724,14 @@
         task.completed = !task.completed;
         task.completedAt = task.completed ? new Date().toISOString().split('T')[0] : null;
         renderTasksTab();
-        if (typeof window.saveUserData === 'function') {
-          window.saveUserData(scores, taskList);
-        }
+        window.saveUserData(scores, taskList);
       }
     };
 
     window.deleteTask = function(taskId) {
       taskList = taskList.filter(t => t.id !== taskId);
       renderTasksTab();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, taskList);
-      }
+      window.saveUserData(scores, taskList);
     };
 
     function renderTasksTab() {
@@ -844,7 +745,6 @@
       const listEl = document.getElementById('activeTaskList');
       listEl.innerHTML = '';
       const t = translations[currentLang];
-
       const activeList = taskList.filter(t => !t.completed);
 
       if (activeList.length === 0) {
@@ -874,44 +774,37 @@
       const year = currentCalDate.getFullYear();
       const month = currentCalDate.getMonth();
       const t = translations[currentLang];
-
       const monthNames = currentLang === 'ru' 
         ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
         : ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
       
       document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
-
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
 
       const dayHeads = currentLang === 'ru' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] : ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
       dayHeads.forEach(d => {
         const div = document.createElement('div');
-        div.className = 'cal-day-head';
-        div.innerText = d;
+        div.className = 'cal-day-head'; div.innerText = d;
         grid.appendChild(div);
       });
 
       const firstDayIdx = (new Date(year, month, 1).getDay() + 6) % 7;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      for (let i = 0; i < firstDayIdx; i++) {
-        grid.appendChild(document.createElement('div'));
-      }
+      for (let i = 0; i < firstDayIdx; i++) grid.appendChild(document.createElement('div'));
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const div = document.createElement('div');
         div.className = `cal-day ${dateStr === selectedCalDayStr ? 'active' : ''}`;
         
-        const hasDone = taskList.some(t => t.completedAt === dateStr);
-        if (hasDone) div.classList.add('has-done');
+        if (taskList.some(t => t.createdAt === dateStr || t.completedAt === dateStr)) {
+          div.classList.add('has-done');
+        }
 
         div.innerText = day;
-        div.onclick = () => {
-          selectedCalDayStr = dateStr;
-          renderCalendarView();
-        };
+        div.onclick = () => { selectedCalDayStr = dateStr; renderCalendarView(); };
         grid.appendChild(div);
       }
 
@@ -946,7 +839,6 @@
       const listEl = document.getElementById('archiveTaskList');
       listEl.innerHTML = '';
       const t = translations[currentLang];
-
       let completedTasks = taskList.filter(t => t.completed);
       const now = new Date();
 
