@@ -1,1 +1,95 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Колесо Баланса</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #000000);
+      margin: 0;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    h2 { text-align: center; margin-bottom: 20px; }
+    .chart-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
+    .sliders { margin-top: 20px; }
+    .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .slider-group label { font-size: 14px; flex: 1; }
+    .slider-group input { width: 45%; }
+    .slider-group span { width: 25px; text-align: right; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>Колесо Жизненного Баланса</h2>
+  
+  <div class="chart-container">
+    <canvas id="wheelChart"></canvas>
+  </div>
+
+  <div class="sliders" id="slidersContainer"></div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const categories = [
+      'Здоровье', 'Финансы', 'Карьера', 'Рост',
+      'Отношения', 'Яркость', 'Окружение', 'Быт'
+    ];
+    
+    let scores = [5, 5, 5, 5, 5, 5, 5, 5];
+
+    const ctx = document.getElementById('wheelChart').getContext('2d');
+    const wheelChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: categories,
+        datasets: [{
+          label: 'Уровень сферы (1-10)',
+          data: scores,
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            min: 0,
+            max: 10,
+            ticks: { stepSize: 2 }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    const container = document.getElementById('slidersContainer');
+    categories.forEach((cat, index) => {
+      const group = document.createElement('div');
+      group.className = 'slider-group';
+      group.innerHTML = `
+        <label>${cat}</label>
+        <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
+        <span id="val-${index}">${scores[index]}</span>
+      `;
+      container.appendChild(group);
+    });
+
+    function updateScore(index, value) {
+      scores[index] = Number(value);
+      document.getElementById(`val-${index}`).innerText = value;
+      wheelChart.data.datasets[0].data = scores;
+      wheelChart.update();
+    }
+  </script>
+</body>
+</html>
