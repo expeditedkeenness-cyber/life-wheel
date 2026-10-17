@@ -189,7 +189,7 @@
 
     .task-list { list-style: none; padding: 0; margin: 0; }
     
-    /* Исправлено во избежание наложений */
+    /* Защита от наложений элементов */
     .task-item {
       display: flex; align-items: center; gap: 8px;
       background: var(--card-bg); padding: 10px 12px; margin-bottom: 8px;
@@ -305,7 +305,7 @@
       <ul class="task-list" id="calendarTaskList"></ul>
     </div>
 
-    <!-- Вкладка: Архив (упрощенная и лаконичная) -->
+    <!-- Вкладка: Архив (лаконичный селектор) -->
     <div id="archiveTasksSection" style="display: none;">
       <div style="margin-bottom: 10px;">
         <select id="archiveFilterSelect" onchange="changeArchiveFilter(this.value)" style="width: 100%;">
@@ -335,6 +335,11 @@
         taskInputPlaceholder: 'Введите название задачи...',
         addBtn: 'Добавить задачу',
         archOptAll: '📂 Все время', archOptToday: '📅 За сегодня', archOptWeek: '🗓 За 7 дней', archOptMonth: '📊 За месяц', archOptYear: '⏳ Год назад',
+        emptyTasks: 'Список задач пуст 👍',
+        emptyCalendar: 'Нет задач на эту дату',
+        emptyArchive: 'В архиве пусто',
+        calSelectedTitle: 'Задачи на выбранную дату:',
+        checkTitle: 'Отметить выполненной',
         langBtn: '🌐 UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         descriptions: [
@@ -366,6 +371,11 @@
         taskInputPlaceholder: 'Введіть назву завдання...',
         addBtn: 'Додати завдання',
         archOptAll: '📂 Весь час', archOptToday: '📅 За сьогодні', archOptWeek: '🗓 За 7 днів', archOptMonth: '📊 За місяць', archOptYear: '⏳ Рік тому',
+        emptyTasks: 'Список завдань порожній 👍',
+        emptyCalendar: 'Немає завдань на цю дату',
+        emptyArchive: 'В архіві порожньо',
+        calSelectedTitle: 'Завдання на обрану дату:',
+        checkTitle: 'Позначити виконаним',
         langBtn: '🌐 RU',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         descriptions: [
@@ -465,6 +475,8 @@
       document.getElementById('archOptWeek').innerText = t.archOptWeek;
       document.getElementById('archOptMonth').innerText = t.archOptMonth;
       document.getElementById('archOptYear').innerText = t.archOptYear;
+
+      document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
 
       const infoContainer = document.getElementById('infoCardsContainer');
       infoContainer.innerHTML = '';
@@ -646,7 +658,7 @@
       const activeList = taskList.filter(t => !t.completed);
 
       if (activeList.length === 0) {
-        listEl.innerHTML = `<li style="font-size:13px; color:var(--subtext-color); text-align:center; padding:15px;">Список задач пуст 👍</li>`;
+        listEl.innerHTML = `<li style="font-size:13px; color:var(--subtext-color); text-align:center; padding:15px;">${t.emptyTasks}</li>`;
         return;
       }
 
@@ -654,7 +666,7 @@
         const li = document.createElement('li');
         li.className = 'task-item';
         li.innerHTML = `
-          <button class="check-btn" onclick="toggleTask('${task.id}')" title="Отметить выполненной">✓</button>
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
           <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
           <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
@@ -718,7 +730,7 @@
       listEl.innerHTML = '';
 
       if (dayTasks.length === 0) {
-        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">Нет задач на эту дату</li>`;
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyCalendar}</li>`;
         return;
       }
 
@@ -726,7 +738,7 @@
         const li = document.createElement('li');
         li.className = `task-item ${task.completed ? 'completed' : ''}`;
         li.innerHTML = `
-          <button class="check-btn" onclick="toggleTask('${task.id}')">✓</button>
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
           <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
           <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
@@ -763,7 +775,7 @@
       }
 
       if (completedTasks.length === 0) {
-        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:15px;">В архиве пусто</li>`;
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:15px;">${t.emptyArchive}</li>`;
         return;
       }
 
@@ -771,7 +783,7 @@
         const li = document.createElement('li');
         li.className = 'task-item completed';
         li.innerHTML = `
-          <button class="check-btn" onclick="toggleTask('${task.id}')">✓</button>
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
           <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
           <span class="task-text">${task.text}</span>
           <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
