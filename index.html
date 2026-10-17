@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Колесо Баланса</title>
+  <title>Колесо Балансу</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Firebase SDK -->
@@ -40,7 +40,8 @@
       const userAvatar = document.getElementById('userAvatar');
       
       if (user) {
-        authBtn.innerText = user.displayName.split(' ')[0];
+        const customName = localStorage.getItem('streletskayaCustomName');
+        authBtn.innerText = customName || user.displayName.split(' ')[0];
         document.getElementById('authBox').onclick = window.logoutFromGoogle;
         if(user.photoURL) {
           userAvatar.src = user.photoURL;
@@ -48,8 +49,15 @@
         }
         await loadUserData(user.uid);
       } else {
-        authBtn.innerText = 'Войти';
-        document.getElementById('authBox').onclick = window.loginWithGoogle;
+        const customName = localStorage.getItem('streletskayaCustomName');
+        if (customName) {
+          authBtn.innerText = customName;
+          document.getElementById('authBox').onclick = window.logoutFromGoogle;
+        } else {
+          const t = translations[currentLang];
+          authBtn.innerText = t.loginText;
+          document.getElementById('authBox').onclick = window.loginWithGoogle;
+        }
         userAvatar.style.display = 'none';
       }
     });
@@ -187,10 +195,20 @@
     .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
     .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
     
-    /* Кликабельная лейбла сферы для вызова справки */
+    /* Улучшенный дизайн названий сфер (без пунктира, современный аккуратный вид с иконкой информации) */
     .slider-group label {
-      font-size: 13px; flex: 1; font-weight: 500; cursor: pointer;
-      color: var(--accent-color); text-decoration: underline dotted;
+      font-size: 13px; flex: 1; font-weight: 600; cursor: pointer;
+      color: var(--text-color); display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s ease;
+    }
+    .slider-group label:hover {
+      color: var(--accent-color);
+    }
+    .slider-group label::after {
+      content: 'ⓘ';
+      font-size: 11px;
+      color: var(--accent-color);
+      opacity: 0.8;
     }
     .slider-group input { width: 40%; accent-color: var(--accent-color); }
     .slider-group span { width: 25px; text-align: right; font-weight: bold; color: var(--accent-color); }
@@ -212,14 +230,6 @@
     }
     .danger-btn { background-color: var(--danger-color); color: #fff; }
     
-    .sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-    .sub-tab-btn {
-      flex: 1; padding: 8px; font-size: 12px; font-weight: 600;
-      border: 1px solid var(--border-color); background: var(--card-bg);
-      color: var(--subtext-color); border-radius: 8px; cursor: pointer; text-align: center;
-    }
-    .sub-tab-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
-
     .task-list { list-style: none; padding: 0; margin: 0; }
     .task-item {
       display: flex; align-items: center; gap: 8px;
@@ -265,22 +275,26 @@
     }
     .modal-card h3 { color: var(--accent-color); margin-top: 0; font-size: 18px; }
     .modal-card p { font-size: 13px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; text-align: left; }
-    .modal-steps { font-size: 11px; color: var(--subtext-color); margin-bottom: 12px; font-weight: bold; }
     .modal-buttons { display: flex; gap: 8px; }
   </style>
 </head>
 <body>
 
-  <!-- Путеводитель / Онбординг -->
-  <div class="modal-overlay" id="onboardingModal">
+  <!-- Первичное приветственное окно при первом входе (Язык + Имя) -->
+  <div class="modal-overlay" id="welcomeModal">
     <div class="modal-card">
-      <div class="modal-steps" id="onboardingStepIndicator">Шаг 1 из 3</div>
-      <h3 id="onboardingTitle">Заголовок</h3>
-      <p id="onboardingText" style="text-align: center;">Текст объяснения...</p>
-      <div class="modal-buttons">
-        <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="onboardingSkipBtn" onclick="closeOnboarding()">Пропустить</button>
-        <button class="primary-btn" style="flex:1; margin-bottom:0;" id="onboardingNextBtn" onclick="nextOnboardingStep()">Далее</button>
+      <h3 style="text-align: center;">Вітаю! / Welcome!</h3>
+      <p style="text-align: center; font-size: 12px; color: var(--subtext-color);">Оберіть мову / Choose language</p>
+      
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button type="button" class="primary-btn" id="langUaBtn" onclick="setInitialLang('ua')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇺🇦 Українська</button>
+        <button type="button" class="primary-btn" id="langEnBtn" onclick="setInitialLang('en')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇬🇧 English</button>
       </div>
+
+      <p id="welcomePromptText" style="text-align: center; font-size: 12px; margin-bottom: 6px;">Введіть ваше ім'я (для відображення в шапці):</p>
+      <input type="text" id="welcomeNameInput" placeholder="Ваше ім'я..." style="width: 100%; margin-bottom: 15px; text-align: center;">
+      
+      <button class="primary-btn" onclick="saveWelcomeSettings()" id="welcomeSubmitBtn">Продовжити</button>
     </div>
   </div>
 
@@ -288,47 +302,47 @@
   <div class="modal-overlay" id="sphereInfoModal">
     <div class="modal-card">
       <h3 id="sphereModalTitle">Сфера</h3>
-      <p id="sphereModalDesc">Описание...</p>
-      <button class="primary-btn" onclick="closeSphereModal()">Понятно</button>
+      <p id="sphereModalDesc">Опис...</p>
+      <button class="primary-btn" onclick="closeSphereModal()" id="sphereCloseBtn">Зрозуміло</button>
     </div>
   </div>
 
   <!-- Модальное окно подтверждения удаления задачи -->
   <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal-card">
-      <h3 id="delModalTitle" style="color: var(--danger-color);">Удаление задачи</h3>
-      <p id="delModalText" style="text-align: center;">Вы уверены, что хотите удалить эту задачу?</p>
+      <h3 id="delModalTitle" style="color: var(--danger-color);">Видалення завдання</h3>
+      <p id="delModalText" style="text-align: center;">Ви впевнені, що хочете видалити це завдання?</p>
       <div class="modal-buttons">
-        <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="delCancelBtn" onclick="closeDeleteModal()">Отмена</button>
-        <button class="primary-btn danger-btn" style="flex:1; margin-bottom:0;" id="delConfirmBtn" onclick="confirmDeleteTask()">Удалить</button>
+        <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="delCancelBtn" onclick="closeDeleteModal()">Скасувати</button>
+        <button class="primary-btn danger-btn" style="flex:1; margin-bottom:0;" id="delConfirmBtn" onclick="confirmDeleteTask()">Видалити</button>
       </div>
     </div>
   </div>
 
   <div class="header-bar">
     <div class="app-brand">
-      <div class="app-logo">🎯</div>
+      <div class="app-logo">✨</div>
       <div>
         <div class="app-title-text" id="appTitleMain">Колесо</div>
-        <div class="app-subtitle-text" id="appTitleSub">Баланса</div>
+        <div class="app-subtitle-text" id="appTitleSub">Балансу</div>
       </div>
     </div>
 
     <div class="header-controls">
       <div class="auth-box" id="authBox">
         <img id="userAvatar" class="user-avatar" alt="User">
-        <span class="auth-text" id="authBtnText">Войти</span>
+        <span class="auth-text" id="authBtnText">Увійти</span>
       </div>
-      <button class="btn-icon" onclick="toggleTheme()" id="themeBtn" title="Сменить тему">🌙</button>
-      <button class="btn-icon" onclick="toggleLanguage()" id="langBtn" title="Сменить язык" style="font-weight: bold; font-size: 11px;">UA</button>
+      <button class="btn-icon" onclick="toggleTheme()" id="themeBtn" title="Змінити тему">🌙</button>
+      <button class="btn-icon" onclick="toggleLanguage()" id="langBtn" title="Змінити мову" style="font-weight: bold; font-size: 11px;">EN</button>
     </div>
   </div>
 
-  <!-- Навигация: Задачи строго посередине, Календарь справа -->
+  <!-- Навигация: Задачи посередине, Календарь справа -->
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
-    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab2">✅ Задачи</button>
-    <button class="tab-btn" onclick="openTab(event, 'calendarTab')" id="tab3">📅 Календарь</button>
+    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab2">📝 Завдання</button>
+    <button class="tab-btn" onclick="openTab(event, 'calendarTab')" id="tab3">📅 Календар</button>
   </div>
 
   <!-- Колесо -->
@@ -347,13 +361,13 @@
         <input type="date" id="taskDueDate">
       </div>
 
-      <input type="text" id="taskInput" placeholder="Введите название задачи..." style="width: 100%; margin-bottom: 8px;">
+      <input type="text" id="taskInput" placeholder="Введіть назву завдання..." style="width: 100%; margin-bottom: 8px;">
       
       <select id="templateSelect" onchange="applyTemplate()" style="width: 100%; margin-bottom: 8px;">
-        <option value="" id="templatePlaceholder">💡 Или выберите из готовых идей...</option>
+        <option value="" id="templatePlaceholder">💡 Або оберіть з готових ідей...</option>
       </select>
 
-      <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить задачу</button>
+      <button class="primary-btn" onclick="addTask()" id="addBtn">Додати завдання</button>
     </div>
 
     <div id="activeTasksSection">
@@ -366,85 +380,37 @@
     <div class="calendar-card">
       <div class="calendar-header">
         <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(-1)">&lt;</button>
-        <span id="calMonthYear">Октябрь 2026</span>
+        <span id="calMonthYear">Жовтень 2026</span>
         <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(1)">&gt;</button>
       </div>
       <div class="calendar-grid" id="calendarGrid"></div>
     </div>
     
-    <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color);" id="calSelectedDateTitle">Задачи на выбранную дату:</div>
+    <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color);" id="calSelectedDateTitle">Завдання на обрану дату:</div>
     <ul class="task-list" id="calendarTaskList" style="margin-bottom: 15px;"></ul>
 
     <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-      <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--subtext-color);" id="calHistoryTitle">История выполненных задач:</div>
+      <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--subtext-color);" id="calHistoryTitle">Історія виконаних завдань:</div>
       <select id="historyFilterSelect" onchange="renderCalendarHistory(this.value)" style="width: 100%; margin-bottom: 10px;">
-        <option value="7days" id="histOpt7Days">🗓 За последние 7 дней</option>
-        <option value="month" id="histOptMonth">📊 За последний месяц</option>
-        <option value="3months" id="histOpt3Months">⏳ За последние 3 месяца</option>
-        <option value="6months" id="histOpt6Months">📈 За полгода</option>
-        <option value="year" id="histOptYear">🏆 За год</option>
+        <option value="7days" id="histOpt7Days">🗓 За останні 7 днів</option>
+        <option value="month" id="histOptMonth">📊 За останній місяць</option>
+        <option value="3months" id="histOpt3Months">⏳ За останні 3 місяці</option>
+        <option value="6months" id="histOpt6Months">📈 За пів року</option>
+        <option value="year" id="histOptYear">🏆 За рік</option>
       </select>
       <ul class="task-list" id="historyTaskList"></ul>
     </div>
   </div>
 
   <script>
-    let currentLang = localStorage.getItem('appLang') || 'ru';
+    // По умолчанию включаем украинский, если язык еще не выбран
+    let currentLang = localStorage.getItem('appLang') || 'ua';
     let currentTheme = localStorage.getItem('appTheme') || 'dark';
 
     const translations = {
-      ru: {
-        appTitleMain: 'Колесо', appTitleSub: 'Баланса',
-        tab1: '📊 Колесо', tab2: '✅ Задачи', tab3: '📅 Календарь',
-        templatePlaceholder: '💡 Или выберите из готовых идей...',
-        taskInputPlaceholder: 'Введите название задачи...',
-        addBtn: 'Добавить задачу',
-        emptyTasks: 'Список задач пуст 👍',
-        emptyCalendar: 'Нет задач на эту дату',
-        emptyHistory: 'За этот период нет выполненных задач',
-        calSelectedTitle: 'Задачи на выбранную дату:',
-        calHistoryTitle: 'История выполненных задач:',
-        checkTitle: 'Отметить выполненной',
-        langBtn: 'UA',
-        delModalTitle: 'Удаление задачи',
-        delModalText: 'Вы уверены, что хотите удалить эту задачу?',
-        delCancelBtn: 'Отмена',
-        delConfirmBtn: 'Удалить',
-        histOpt7Days: '🗓 За последние 7 дней',
-        histOptMonth: '📊 За последний месяц',
-        histOpt3Months: '⏳ За последние 3 месяца',
-        histOpt6Months: '📈 За полгода',
-        histOptYear: '🏆 За год',
-        categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
-        onboarding: [
-          { title: '🧠 Зачем нужно Колесо Баланса?', text: 'С точки зрения КПТ, наш мозг часто зацикливается на одной сфере, упуская другие. Оценка сфер помогает вернуть объективный взгляд на жизнь.' },
-          { title: '🎯 Синдром "всё или ничего"', text: 'Метод микро-шагов (по 5-10 минут) снижает тревогу и активирует дофаминовую систему без перегрузки.' },
-          { title: '📅 Календарь и История', text: 'Фиксация маленьких шагов доказывает вам, что вы движетесь вперед. Нажмите на название любой сферы на вкладке "Колесо", чтобы узнать ее подробное КПТ-описание. Начнем!' }
-        ],
-        descriptions: [
-          { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
-          { name: '2. Семья и Близкие', desc: 'Зона эмоциональной безопасности, любви и глубокой привязанности.' },
-          { name: '3. Друзья и Окружение', desc: 'Социальный круг единомышленников и взаимная поддержка.' },
-          { name: '4. Хобби и Творчество', desc: 'Деятельность из компонента «ХОЧУ», дающая дофаминовый ресурс.' },
-          { name: '5. Отдых и Восстановление', desc: 'Психогигиена и профилактика эмоционального выгорания.' },
-          { name: '6. Здоровье и Тело', desc: 'Сон, питание, спорт и внимание к сигналам тела.' },
-          { name: '7. Духовность и Смысл', desc: 'Ощущение предназначения и ответы на экзистенциальные вопросы.' },
-          { name: '8. Саморазвитие и Рост', desc: 'Изучение нового, расширение кругозора и работа с мышлением.' }
-        ],
-        templates: {
-          'Работа': ['Очистить рабочий стол', 'Составить 3 приоритета', 'Зафиксировать достижение'],
-          'Семья': ['Написать близкому', 'Устроить общение без телефонов', 'Поблагодарить родных'],
-          'Друзья': ['Отправить другу память', 'Запланировать встречу', 'Узнать как дела'],
-          'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок', 'Заказать материалы'],
-          'Отдых': ['Цифровой детокс 10 мин', 'Побыть в тишине', 'Лечь раньше на 30 мин'],
-          'Здоровье': ['Выпить стакан воды', 'Сделать разминку', 'Записаться к врачу'],
-          'Духовность': ['Записать 3 благодарности', 'Помедитировать', 'Сделать доброе дело'],
-          'Саморазвитие': ['Прочитать 5 страниц', 'Выписать инсайт', 'Поучить слова']
-        }
-      },
       ua: {
         appTitleMain: 'Колесо', appTitleSub: 'Балансу',
-        tab1: '📊 Колесо', tab2: '✅ Завдання', tab3: '📅 Календар',
+        tab1: '📊 Колесо', tab2: '📝 Завдання', tab3: '📅 Календар',
         templatePlaceholder: '💡 Або оберіть з готових ідей...',
         taskInputPlaceholder: 'Введіть назву завдання...',
         addBtn: 'Додати завдання',
@@ -454,22 +420,21 @@
         calSelectedTitle: 'Завдання на обрану дату:',
         calHistoryTitle: 'Історія виконаних завдань:',
         checkTitle: 'Позначити виконаним',
-        langBtn: 'RU',
+        langBtn: 'EN',
+        loginText: 'Увійти',
         delModalTitle: 'Видалення завдання',
         delModalText: 'Ви впевнені, що хочете видалити це завдання?',
         delCancelBtn: 'Скасувати',
         delConfirmBtn: 'Видалити',
+        sphereCloseBtn: 'Зрозуміло',
+        welcomePrompt: "Введіть ваше ім'я (для відображення в шапці):",
+        welcomeBtn: 'Продовжити',
         histOpt7Days: '🗓 За останні 7 днів',
         histOptMonth: '📊 За останній місяць',
         histOpt3Months: '⏳ За останні 3 місяці',
         histOpt6Months: '📈 За пів року',
         histOptYear: '🏆 За рік',
-        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморазвиток'],
-        onboarding: [
-          { title: '🧠 Навіщо потрібне Колесо Балансу?', text: 'З погляду КПТ, наш мозг часто зациклюється на одній сфері. Оцінка сфер допомагає повернути об’єктивний погляд.' },
-          { title: '🎯 Синдром "все або нічого"', text: 'Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.' },
-          { title: '📅 Календар та Історія', text: 'Фіксація маленьких кроків доводить вам, що ви рухаєтеся вперед. Натисніть на назву будь-якої сфери на вкладці "Колесо", щоб дізнатися її опис. Почнімо!' }
-        ],
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         descriptions: [
           { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
           { name: '2. Сім’я та Близькі', desc: 'Зона емоційної безпеки, любові та глибокої прив’язаності.' },
@@ -488,7 +453,55 @@
           'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
           'Здоров’я': ['Випити склянку води', 'Зробити розминку', 'Записатися до лікаря'],
           'Духовність': ['Записати 3 вдячності', 'Помедитувати', 'Зробити добру справу'],
-          'Саморазвиток': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
+          'Саморозвиток': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
+        }
+      },
+      en: {
+        appTitleMain: 'Life', appTitleSub: 'Wheel',
+        tab1: '📊 Wheel', tab2: '📝 Tasks', tab3: '📅 Calendar',
+        templatePlaceholder: '💡 Or choose from ready ideas...',
+        taskInputPlaceholder: 'Enter task name...',
+        addBtn: 'Add Task',
+        emptyTasks: 'Task list is empty 👍',
+        emptyCalendar: 'No tasks for this date',
+        emptyHistory: 'No completed tasks for this period',
+        calSelectedTitle: 'Tasks for selected date:',
+        calHistoryTitle: 'Completed tasks history:',
+        checkTitle: 'Mark as completed',
+        langBtn: 'UA',
+        loginText: 'Sign In',
+        delModalTitle: 'Delete Task',
+        delModalText: 'Are you sure you want to delete this task?',
+        delCancelBtn: 'Cancel',
+        delConfirmBtn: 'Delete',
+        sphereCloseBtn: 'Got it',
+        welcomePrompt: "Enter your name (to display in header):",
+        welcomeBtn: 'Continue',
+        histOpt7Days: '🗓 Last 7 days',
+        histOptMonth: '📊 Last month',
+        histOpt3Months: '⏳ Last 3 months',
+        histOpt6Months: '📈 Last 6 months',
+        histOptYear: '🏆 Last year',
+        categories: ['Work', 'Family', 'Friends', 'Hobbies', 'Rest', 'Health', 'Spirituality', 'Growth'],
+        descriptions: [
+          { name: '1. Work & Career', desc: 'Professional self-realization and social demand.' },
+          { name: '2. Family & Close Ones', desc: 'Zone of emotional safety, love, and deep attachment.' },
+          { name: '3. Friends & Environment', desc: 'Social circle of like-minded people and mutual support.' },
+          { name: '4. Hobbies & Creativity', desc: 'Activities from the "WANT" component providing dopamine resource.' },
+          { name: '5. Rest & Recovery', desc: 'Psychohygienes and prevention of emotional burnout.' },
+          { name: '6. Health & Body', desc: 'Sleep, nutrition, sports, and attention to body signals.' },
+          { name: '7. Spirituality & Meaning', desc: 'Sense of purpose and answers to existential questions.' },
+          { name: '8. Self-Development & Growth', desc: 'Learning new things, broadening horizons, and mindset work.' }
+        ],
+        templates: {
+          'Work': ['Clear desktop', 'Set 3 priorities', 'Log achievement'],
+          'Family': ['Text a loved one', 'Device-free quality time', 'Thank relatives'],
+          'Friends': ['Send a memory to a friend', 'Plan a meetup', 'Check-in on someone'],
+          'Hobbies': ['Spend 10 min on hobby', 'Watch a tutorial', 'Order supplies'],
+          'Rest': ['Digital detox for 10 min', 'Spend time in silence', 'Sleep 30 min earlier'],
+          'Health': ['Drink a glass of water', 'Do stretching', 'Book a doctor appointment'],
+          'Spirituality': ['Write down 3 gratitudes', 'Meditate', 'Do a good deed'],
+          'Growth': ['Read 5 pages', 'Write down an insight', 'Learn vocabulary']
         }
       }
     };
@@ -505,7 +518,6 @@
     let currentCalDate = new Date();
     let selectedCalDayStr = new Date().toISOString().split('T')[0];
     let historyFilterMode = '7days';
-    let onboardingStep = 0;
     let taskToDeleteId = null;
 
     document.getElementById('taskDueDate').value = selectedCalDayStr;
@@ -518,37 +530,43 @@
       }, 250);
     }
 
+    // Проверяем первый визит: если нет метки в localStorage, показываем приветственное окно
     function checkFirstVisit() {
       if (!localStorage.getItem('streletskayaVisited')) {
-        showOnboarding(false);
+        document.getElementById('welcomeModal').classList.add('show');
+      } else {
+        applyLanguage();
       }
     }
 
-    window.showOnboarding = function(manual = true) {
-      onboardingStep = 0;
-      updateOnboardingContent();
-      document.getElementById('onboardingModal').classList.add('show');
-      if (!manual) localStorage.setItem('streletskayaVisited', 'true');
+    let tempChosenLang = 'ua';
+    window.setInitialLang = function(lang) {
+      tempChosenLang = lang;
+      document.getElementById('langUaBtn').style.borderColor = lang === 'ua' ? 'var(--accent-color)' : 'var(--border-color)';
+      document.getElementById('langEnBtn').style.borderColor = lang === 'en' ? 'var(--accent-color)' : 'var(--border-color)';
     };
 
-    window.nextOnboardingStep = function() {
-      const t = translations[currentLang];
-      onboardingStep++;
-      if (onboardingStep < t.onboarding.length) updateOnboardingContent();
-      else closeOnboarding();
+    window.saveWelcomeSettings = function() {
+      const nameInput = document.getElementById('welcomeNameInput').value.trim();
+      if (nameInput) {
+        localStorage.setItem('streletskayaCustomName', nameInput);
+        document.getElementById('authBtnText').innerText = nameInput;
+      }
+      currentLang = tempChosenLang;
+      localStorage.setItem('appLang', currentLang);
+      localStorage.setItem('streletskayaVisited', 'true');
+      document.getElementById('welcomeModal').classList.remove('show');
+      applyLanguage();
     };
 
-    window.closeOnboarding = function() {
-      document.getElementById('onboardingModal').classList.remove('show');
-    };
-
-    // Открытие модального окна с описанием конкретной сферы
+    // Окно справки по сфере
     window.openSphereInfo = function(index) {
       const t = translations[currentLang];
       const sphereData = t.descriptions[index];
       if (sphereData) {
         document.getElementById('sphereModalTitle').innerText = sphereData.name;
         document.getElementById('sphereModalDesc').innerText = sphereData.desc;
+        document.getElementById('sphereCloseBtn').innerText = t.sphereCloseBtn;
         document.getElementById('sphereInfoModal').classList.add('show');
       }
     };
@@ -604,7 +622,7 @@
 
     window.toggleLanguage = function() {
       applySmoothTransition(() => {
-        currentLang = currentLang === 'ru' ? 'ua' : 'ru';
+        currentLang = currentLang === 'ua' ? 'en' : 'ua';
         localStorage.setItem('appLang', currentLang);
         applyLanguage();
       });
@@ -623,6 +641,10 @@
       document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
       document.getElementById('calHistoryTitle').innerText = t.calHistoryTitle;
 
+      if (!localStorage.getItem('streletskayaCustomName')) {
+        document.getElementById('authBtnText').innerText = t.loginText;
+      }
+
       document.getElementById('histOpt7Days').innerText = t.histOpt7Days;
       document.getElementById('histOptMonth').innerText = t.histOptMonth;
       document.getElementById('histOpt3Months').innerText = t.histOpt3Months;
@@ -633,6 +655,10 @@
       document.getElementById('delModalText').innerText = t.delModalText;
       document.getElementById('delCancelBtn').innerText = t.delCancelBtn;
       document.getElementById('delConfirmBtn').innerText = t.delConfirmBtn;
+      document.getElementById('sphereCloseBtn').innerText = t.sphereCloseBtn;
+
+      document.getElementById('welcomePromptText').innerText = t.welcomePrompt;
+      document.getElementById('welcomeSubmitBtn').innerText = t.welcomeBtn;
 
       wheelChart.data.labels = t.categories;
       wheelChart.update();
@@ -656,7 +682,7 @@
       data: {
         labels: [],
         datasets: [{
-          label: 'Уровень', data: scores,
+          label: 'Рівень', data: scores,
           backgroundColor: 'rgba(55, 151, 240, 0.35)',
           borderColor: '#3797f0', borderWidth: 2, pointBackgroundColor: '#3797f0'
         }]
@@ -682,7 +708,7 @@
         const group = document.createElement('div');
         group.className = 'slider-group';
         group.innerHTML = `
-          <label onclick="openSphereInfo(${index})" title="Нажмите, чтобы прочитать описание сферы">${cat}</label>
+          <label onclick="openSphereInfo(${index})" title="Натисніть, щоб прочитати опис сфери">${cat}</label>
           <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
           <span id="val-${index}">${scores[index]}</span>
         `;
@@ -801,15 +827,15 @@
       const year = currentCalDate.getFullYear();
       const month = currentCalDate.getMonth();
       const t = translations[currentLang];
-      const monthNames = currentLang === 'ru' 
-        ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
-        : ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+      const monthNames = currentLang === 'ua' 
+        ? ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
+        : ['January','February','March','April','May','June','July','August','September','October','November','December'];
       
       document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
 
-      const dayHeads = currentLang === 'ru' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] : ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+      const dayHeads = currentLang === 'ua' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
       dayHeads.forEach(d => {
         const div = document.createElement('div');
         div.className = 'cal-day-head'; div.innerText = d;
@@ -878,13 +904,13 @@
         completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
       } else if (mode === '6months') {
         const limitDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) + '' >= limitDate);
       } else if (mode === 'year') {
         const limitDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
       }
 
-      if (completedTasks.length === 0) {
+      if (completedTasks.includeUser === false || completedTasks.length === 0) {
         listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyHistory}</li>`;
         return;
       }
@@ -903,7 +929,6 @@
     }
 
     applyTheme();
-    applyLanguage();
     checkFirstVisit();
   </script>
 </body>
