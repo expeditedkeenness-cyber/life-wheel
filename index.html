@@ -3,9 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Колесо Баланса</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>Колесо Баланса по Е. Стрелецкой</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Ваши конфигурированные ключи Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdypqxdS_w2bp_ubPg4_9YoNXq7HLIBIE",
+      authDomain: "life-wheel-5e119.firebaseapp.com",
+      projectId: "life-wheel-5e119",
+      storageBucket: "life-wheel-5e119.firebasestorage.app",
+      messagingSenderId: "1044261685647",
+      appId: "1:1044261685647:web:350a3d2f821c4052e0e3fa",
+      measurementId: "G-RM1ZL6WJ4Q"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    window.loginWithGoogle = function() {
+      signInWithPopup(auth, provider).catch((error) => console.error(error));
+    };
+
+    window.logoutFromGoogle = function() {
+      signOut(auth);
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      const authBtn = document.getElementById('authBtn');
+      const userAvatar = document.getElementById('userAvatar');
+      
+      if (user) {
+        authBtn.innerText = `Выйти (${user.displayName.split(' ')[0]})`;
+        authBtn.onclick = window.logoutFromGoogle;
+        if(user.photoURL) {
+          userAvatar.src = user.photoURL;
+          userAvatar.style.display = 'block';
+        }
+        await loadUserData(user.uid);
+      } else {
+        authBtn.innerText = '🌐 Войти через Google';
+        authBtn.onclick = window.loginWithGoogle;
+        userAvatar.style.display = 'none';
+      }
+    });
+
+    window.saveUserData = async function(newScores, newTasks) {
+      const user = auth.currentUser;
+      if (!user) {
+        localStorage.setItem('streletskayaThemeScores', JSON.stringify(newScores));
+        localStorage.setItem('streletskayaThemeTasks', JSON.stringify(newTasks));
+        return;
+      }
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          scores: newScores,
+          tasks: newTasks,
+          updatedAt: new Date()
+        });
+      } catch (e) {
+        console.error("Ошибка сохранения в облако: ", e);
+      }
+    };
+
+    async function loadUserData(uid) {
+      try {
+        const docRef = doc(db, "users", uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.scores) {
+            scores = data.scores;
+            updateSlidersAndChart();
+          }
+          if (data.tasks) {
+            tasks = data.tasks;
+            renderTasks();
+          }
+        }
+      } catch (e) {
+        console.error("Ошибка загрузки из облака: ", e);
+      }
+    }
+  </script>
+
   <style>
     :root {
       --bg-color: #121212;
@@ -15,7 +103,6 @@
       --accent-text: #ffffff;
       --border-color: rgba(255, 255, 255, 0.15);
       --subtext-color: #b0b0b0;
-      --grid-color: rgba(255, 255, 255, 0.2);
     }
 
     body.light-theme {
@@ -26,69 +113,29 @@
       --accent-text: #ffffff;
       --border-color: rgba(0, 0, 0, 0.12);
       --subtext-color: #666666;
-      --grid-color: rgba(0, 0, 0, 0.15);
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
-      margin: 0;
-      padding: 12px;
-      box-sizing: border-box;
+      margin: 0; padding: 12px; box-sizing: border-box;
       transition: background-color 0.3s, color 0.3s;
       -webkit-tap-highlight-color: transparent;
     }
     
-    /* Шапка с кнопками */
-    .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .header-controls {
-      display: flex;
-      gap: 8px;
-    }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .header-controls { display: flex; gap: 6px; align-items: center; }
     .btn-toggle {
-      background: var(--card-bg);
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      background: var(--card-bg); color: var(--text-color);
+      border: 1px solid var(--border-color); padding: 6px 10px;
+      border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer;
     }
+    .user-avatar { width: 24px; height: 24px; border-radius: 50%; display: none; }
 
-    /* Вкладки */
-    .nav-tabs {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 15px;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 10px 2px;
-      border: none;
-      background: none;
-      font-size: 12px;
-      font-weight: bold;
-      color: var(--subtext-color);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      text-align: center;
-    }
-    .tab-btn.active {
-      color: var(--accent-color);
-      border-bottom-color: var(--accent-color);
-    }
-
+    .nav-tabs { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+    .tab-btn { flex: 1; padding: 10px 2px; border: none; background: none; font-size: 12px; font-weight: bold; color: var(--subtext-color); cursor: pointer; border-bottom: 3px solid transparent; text-align: center; }
+    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
@@ -98,124 +145,45 @@
     .slider-group input { width: 40%; accent-color: var(--accent-color); }
     .slider-group span { width: 25px; text-align: right; font-weight: bold; color: var(--accent-color); }
 
-    /* Описание */
-    .info-card {
-      background: var(--card-bg);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 10px;
-      border: 1px solid var(--border-color);
-      border-left: 4px solid var(--accent-color);
-    }
+    .info-card { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); }
     .info-card h4 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 14px; }
     .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-color); }
 
-    /* Задачи */
-    .progress-box {
-      background: var(--card-bg);
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border-color);
-    }
-    .progress-bar-bg {
-      background: var(--border-color);
-      height: 8px;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-    .progress-bar-fill {
-      background: var(--accent-color);
-      height: 100%;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-    .progress-text {
-      font-size: 12px;
-      font-weight: bold;
-      display: flex;
-      justify-content: space-between;
-    }
+    .progress-box { background: var(--card-bg); border-radius: 8px; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+    .progress-bar-bg { background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    .progress-bar-fill { background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s ease; }
+    .progress-text { font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; }
 
-    select, input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 8px;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      background: var(--card-bg);
-      color: var(--text-color);
-      font-size: 13px;
-    }
-    .primary-btn {
-      width: 100%;
-      padding: 10px;
-      background-color: var(--accent-color);
-      color: var(--accent-text);
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
-    .filter-box {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-    .filter-btn {
-      flex: 1;
-      padding: 6px;
-      font-size: 11px;
-      border: 1px solid var(--border-color);
-      background: var(--card-bg);
-      color: var(--subtext-color);
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .filter-btn.active {
-      background: var(--accent-color);
-      color: var(--accent-text);
-      border-color: var(--accent-color);
-    }
+    select, input[type="text"] { width: 100%; padding: 10px; margin-bottom: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); font-size: 13px; }
+    .primary-btn { width: 100%; padding: 10px; background-color: var(--accent-color); color: var(--accent-text); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+    .filter-box { display: flex; gap: 6px; margin-bottom: 10px; }
+    .filter-btn { flex: 1; padding: 6px; font-size: 11px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--subtext-color); border-radius: 6px; cursor: pointer; }
+    .filter-btn.active { background: var(--accent-color); color: var(--accent-text); border-color: var(--accent-color); }
 
     .task-list { list-style: none; padding: 0; margin: 0; }
-    .task-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--card-bg);
-      padding: 10px;
-      margin-bottom: 6px;
-      border-radius: 8px;
-      font-size: 13px;
-      border: 1px solid var(--border-color);
-    }
+    .task-item { display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); padding: 10px; margin-bottom: 6px; border-radius: 8px; font-size: 13px; border: 1px solid var(--border-color); }
     .task-item.completed span { text-decoration: line-through; color: var(--subtext-color); }
     .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; }
   </style>
 </head>
 <body>
 
-  <!-- Шапка -->
   <div class="header-bar">
     <span style="font-weight: bold; font-size: 14px;" id="appTitle">📊 Колесо Баланса</span>
     <div class="header-controls">
+      <img id="userAvatar" class="user-avatar" alt="User">
+      <button class="btn-toggle" id="authBtn">🌐 Войти</button>
       <button class="btn-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
       <button class="btn-toggle" onclick="toggleLanguage()" id="langBtn">🌐 UA</button>
     </div>
   </div>
 
-  <!-- Навигация -->
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
     <button class="tab-btn" onclick="openTab(event, 'infoTab')" id="tab2">📖 Описание</button>
     <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
   </div>
 
-  <!-- Вкладка 1: Диаграмма -->
   <div id="wheelTab" class="tab-content active">
     <div class="chart-container">
       <canvas id="wheelChart"></canvas>
@@ -223,12 +191,10 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
-  <!-- Вкладка 2: Описание -->
   <div id="infoTab" class="tab-content">
     <div id="infoCardsContainer"></div>
   </div>
 
-  <!-- Вкладка 3: Задачи -->
   <div id="tasksTab" class="tab-content">
     <select id="taskCategorySelect" onchange="renderTasks()"></select>
 
@@ -243,7 +209,7 @@
     </div>
 
     <select id="templateSelect" onchange="applyTemplate()">
-      <option value="" id="templatePlaceholder">💡 Выбрать готовый микро-шаг...</option>
+      <option value="" id="templatePlaceholder">💡 Выбрать микро-шаг...</option>
     </select>
 
     <input type="text" id="taskInput" placeholder="Или введите свою задачу...">
@@ -259,81 +225,70 @@
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
     let currentLang = localStorage.getItem('appLang') || 'ru';
     let currentTheme = localStorage.getItem('appTheme') || 'dark';
 
     const translations = {
       ru: {
         appTitle: '📊 Колесо Баланса',
-        tab1: '📊 Колесо',
-        tab2: '📖 Описание',
-        tab3: '✅ Задачи',
+        tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
         progressLabel: 'Прогресс сферы',
         templatePlaceholder: '💡 Выбрать готовый микро-шаг (5-10 мин)...',
         taskInputPlaceholder: 'Или введите свою задачу...',
         addBtn: 'Добавить микро-шаг',
-        filterAll: 'Все',
-        filterActive: 'В работе',
-        filterCompleted: 'Готово',
+        filterAll: 'Все', filterActive: 'В работе', filterCompleted: 'Готово',
         langBtn: '🌐 UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         descriptions: [
-          { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация, социальная востребованность и уровень мастерства. Перекос создает чувство бессмысленности.' },
-          { name: '2. Семья и Близкие', desc: 'Близкие партнерские или семейные отношения. Зона эмоциональной безопасности и глубокой привязанности.' },
-          { name: '3. Друзья и Окружение', desc: 'Качественный социальный круг единомышленников, с которыми можно разделять интересы и получать поддержку.' },
-          { name: '4. Хобби и Творчество', desc: 'Деятельность из компонента «ХОЧУ», а не «НАДО». Пространство свободной игры и творчества, дающее дофаминовый ресурс.' },
-          { name: '5. Отдых и Восстановление', desc: 'Соблюдение психогигиены, переключение от дел и полноценное восстановление нервной системы для профилактики выгорания.' },
-          { name: '6. Здоровье и Тело', desc: 'Физическое самочувствие, сон, рацион питания, регулярные нагрузки и внимание к сигналам тела. База для энергии.' },
-          { name: '7. Духовность и Смысл', desc: 'Четкая экзистенциальная концепция: субъективное ощущение предназначения, осознание ответа на вопрос «зачем я живу».' },
-          { name: '8. Саморазвитие и Рост', desc: 'Изучение нового, расширение кругозора, освоение навыков, путешествия и работа с собственным мышлением.' }
+          { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
+          { name: '2. Семья и Близкие', desc: 'Зона эмоциональной безопасности, любви и глубокой привязанности.' },
+          { name: '3. Друзья и Окружение', desc: 'Социальный круг единомышленников и взаимная поддержка.' },
+          { name: '4. Хобби и Творчество', desc: 'Деятельность из компонента «ХОЧУ», дающая дофаминовый ресурс.' },
+          { name: '5. Отдых и Восстановление', desc: 'Психогигиена и профилактика эмоционального выгорания.' },
+          { name: '6. Здоровье и Тело', desc: 'Сон, питание, спорт и внимание к сигналам тела.' },
+          { name: '7. Духовность и Смысл', desc: 'Ощущение предназначения и ответы на экзистенциальные вопросы.' },
+          { name: '8. Саморазвитие и Рост', desc: 'Изучение нового, расширение кругозора и работа с мышлением.' }
         ],
         templates: {
-          'Работа': ['Очистить рабочий стол от мусора', 'Составить 3 главных приоритета на день', 'Зафиксировать 1 рабочее достижение'],
-          'Семья': ['Написать теплое сообщение близкому', 'Устроить 15 минут общения без телефонов', 'Искренне поблагодарить родных'],
-          'Друзья': ['Отправить другу приятное воспоминание', 'Запланировать встречу на выходные', 'Узнать как дела у старого знакомого'],
-          'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок по интересному хобби', 'Заказать материалы для творчества'],
-          'Отдых': ['Сделать 10 минут полного «цифрового детокса»', 'Побыть в тишине с закрытыми глазами', 'Лечь спать на 30 минут раньше'],
-          'Здоровье': ['Выпить стакан чистой воды', 'Сделать 5-минутную разминку', 'Записаться на плановый осмотр'],
-          'Духовность': ['Записать 3 вещи, за которые вы благодарны', 'Помедитировать 5 минут', 'Сделать 1 бескорыстное доброе дело'],
-          'Саморазвитие': ['Прочитать 5 страниц полезной книги', 'Выписать 1 инсайт за сегодня', 'Поучить 5 новых иностранных слов']
+          'Работа': ['Очистить рабочий стол', 'Составить 3 приоритета', 'Зафиксировать достижение'],
+          'Семья': ['Написать близкому', 'Устроить общение без телефонов', 'Поблагодарить родных'],
+          'Друзья': ['Отправить другу память', 'Запланировать встречу', 'Узнать как дела'],
+          'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок', 'Заказать материалы'],
+          'Отдых': ['Цифровой детокс 10 мин', 'Побыть в тишине', 'Лечь раньше на 30 мин'],
+          'Здоровье': ['Выпить стакан воды', 'Сделать разминку', 'Записаться к врачу'],
+          'Духовность': ['Записать 3 благодарности', 'Помедитировать', 'Сделать доброе дело'],
+          'Саморазвитие': ['Прочитать 5 страниц', 'Выписать инсайт', 'Поучить слова']
         }
       },
       ua: {
         appTitle: '📊 Колесо Балансу',
-        tab1: '📊 Колесо',
-        tab2: '📖 Опис',
-        tab3: '✅ Завдання',
+        tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
         progressLabel: 'Прогрес сфери',
-        templatePlaceholder: '💡 Обрати готовий мікро-крок (5-10 хв)...',
+        templatePlaceholder: '💡 Обрати мікро-крок (5-10 хв)...',
         taskInputPlaceholder: 'Або введіть своє завдання...',
         addBtn: 'Додати мікро-крок',
-        filterAll: 'Усі',
-        filterActive: 'В роботі',
-        filterCompleted: 'Готово',
+        filterAll: 'Усі', filterActive: 'В роботі', filterCompleted: 'Готово',
         langBtn: '🌐 RU',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         descriptions: [
-          { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація, соціальна затребуваність та рівень майстерності. Перекіс створює відчуття беззмістовності.' },
-          { name: '2. Сім’я та Близькі', desc: 'Близькі партнерські або сімейні стосунки. Зона емоційної безпеки та глибокої прив’язаності.' },
-          { name: '3. Друзі та Оточення', desc: 'Якісне соціальне коло однодумців, з якими можна ділитися інтересами та отримувати підтримку.' },
-          { name: '4. Хобі та Творчість', desc: 'Діяльність із компонента «ХОЧУ», а не «ТРЕБА». Простір вільної гри та творчості, що дає дофаміновий ресурс.' },
-          { name: '5. Відпочинок та Відновлення', desc: 'Дотримання психогігієни, переключення від справ та повноцінне відновлення нервової системи для профілактики вигорання.' },
-          { name: '6. Здоров’я та Тіло', desc: 'Фізичне самопочуття, сон, раціон харчування, регулярні навантаження та увага до сигналів тіла. База для енергії.' },
-          { name: '7. Духовність та Сенс', desc: 'Чітка екзистенційна концепція: суб’єктивне відчуття призначення, усвідомлення відповіді на питання «навіщо я живу».' },
-          { name: '8. Саморозвиток та Зростання', desc: 'Вивчення нового, розширення кругозору, освоєння навичок, подорожі та робота з власним мисленням.' }
+          { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
+          { name: '2. Сім’я та Близькі', desc: 'Зона емоційної безпеки, любові та глибокої прив’язаності.' },
+          { name: '3. Друзі та Оточення', desc: 'Соціальне коло однодумців та взаємна підтримка.' },
+          { name: '4. Хобі та Творчість', desc: 'Діяльність із компонента «ХОЧУ», що дає дофаміновий ресурс.' },
+          { name: '5. Відпочинок та Відновлення', desc: 'Психогігієна та профілактика емоційного вигорання.' },
+          { name: '6. Здоров’я та Тіло', desc: 'Сон, харчування, спорт та увага до сигналів тіла.' },
+          { name: '7. Духовність та Сенс', desc: 'Відчуття призначення та відповіді на екзистенційні питання.' },
+          { name: '8. Саморазвиток та Зростання', desc: 'Вивчення нового, розширення кругозору та робота з мисленням.' }
         ],
         templates: {
-          'Робота': ['Очистити робочий стіл від сміття', 'Скласти 3 головні пріоритети на день', 'Зафіксувати 1 робоче досягнення'],
-          'Сім’я': ['Написати тепле повідомлення близькому', 'Влаштувати 15 хвилин спілкування без телефонів', 'Щиро подякувати рідним'],
-          'Друзі': ['Надіслати другу приємний спогад', 'Запланувати зустріч на вихідні', 'Дізнатися як справи у старого знайомого'],
-          'Хобі': ['Приділити 10 хвилин захопленню', 'Подивитися урок з цікавого хобі', 'Замовити матеріали для творчості'],
-          'Відпочинок': ['Зробити 10 хвилин повного «цифрового детоксу»', 'Побути в тиші з заплющеними очима', 'Лягти спати на 30 хвилин раніше'],
-          'Здоров’я': ['Випити склянку чистої води', 'Зробити 5-хвилинну розминку', 'Записатися на плановий огляд'],
-          'Духовність': ['Записати 3 речі, за які ви вдячні', 'Помедитувати 5 хвилин', 'Зробити 1 безкорисливу добру справу'],
-          'Саморозвиток': ['Прочитати 5 сторінок корисної книги', 'Виписати 1 інсайт за сьогодні', 'Повчити 5 нових іноземних слів']
+          'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
+          'Сім’я': ['Написати близькому', 'Спілкування без телефонів', 'Подякувати рідним'],
+          'Друзі': ['Надіслати спогад другу', 'Запланувати зустріч', 'Дізнатися справи'],
+          'Хобі': ['Приділити 10 хв хобі', 'Подивитися урок', 'Замовити матеріали'],
+          'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
+          'Здоров’я': ['Випити склянку води', 'Зробити розминку', 'Записатися до лікаря'],
+          'Духовність': ['Записати 3 вдячності', 'Помедитувати', 'Зробити добру справу'],
+          'Саморазвитие': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
         }
       }
     };
@@ -342,18 +297,18 @@
     let tasks = JSON.parse(localStorage.getItem('streletskayaThemeTasks')) || {};
     let currentFilter = 'all';
 
-    function openTab(evt, tabId) {
+    window.openTab = function(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
-    }
+    };
 
-    function toggleTheme() {
+    window.toggleTheme = function() {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
       localStorage.setItem('appTheme', currentTheme);
       applyTheme();
-    }
+    };
 
     function applyTheme() {
       if (currentTheme === 'light') {
@@ -366,11 +321,11 @@
       updateChartColors();
     }
 
-    function toggleLanguage() {
+    window.toggleLanguage = function() {
       currentLang = currentLang === 'ru' ? 'ua' : 'ru';
       localStorage.setItem('appLang', currentLang);
       applyLanguage();
-    }
+    };
 
     function applyLanguage() {
       const t = translations[currentLang];
@@ -386,7 +341,6 @@
       document.getElementById('filterCompleted').innerText = t.filterCompleted;
       document.getElementById('langBtn').innerText = t.langBtn;
 
-      // Описание
       const infoContainer = document.getElementById('infoCardsContainer');
       infoContainer.innerHTML = '';
       t.descriptions.forEach(item => {
@@ -396,22 +350,10 @@
         infoContainer.appendChild(card);
       });
 
-      // Диаграмма и ползунки
       wheelChart.data.labels = t.categories;
       wheelChart.update();
 
-      const slidersContainer = document.getElementById('slidersContainer');
-      slidersContainer.innerHTML = '';
-      t.categories.forEach((cat, index) => {
-        const group = document.createElement('div');
-        group.className = 'slider-group';
-        group.innerHTML = `
-          <label>${cat}</label>
-          <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
-          <span id="val-${index}">${scores[index]}</span>
-        `;
-        slidersContainer.appendChild(group);
-      });
+      updateSlidersAndChart();
 
       const select = document.getElementById('taskCategorySelect');
       select.innerHTML = '';
@@ -425,7 +367,6 @@
       renderTasks();
     }
 
-    // Chart.js
     const ctx = document.getElementById('wheelChart').getContext('2d');
     const wheelChart = new Chart(ctx, {
       type: 'radar',
@@ -443,42 +384,52 @@
       options: {
         scales: {
           r: {
-            min: 0,
-            max: 10,
+            min: 0, max: 10,
             ticks: { display: false },
             grid: { color: 'rgba(255, 255, 255, 0.25)' },
             angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
-            pointLabels: {
-              color: '#ffffff',
-              font: { size: 12, weight: 'bold' }
-            }
+            pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
           }
         },
         plugins: { legend: { display: false } }
       }
     });
 
+    window.updateSlidersAndChart = function() {
+      const t = translations[currentLang];
+      const slidersContainer = document.getElementById('slidersContainer');
+      slidersContainer.innerHTML = '';
+      t.categories.forEach((cat, index) => {
+        const group = document.createElement('div');
+        group.className = 'slider-group';
+        group.innerHTML = `
+          <label>${cat}</label>
+          <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
+          <span id="val-${index}">${scores[index]}</span>
+        `;
+        slidersContainer.appendChild(group);
+      });
+      wheelChart.data.datasets[0].data = scores;
+      wheelChart.update();
+    };
+
     function updateChartColors() {
       const isLight = currentTheme === 'light';
-      const labelColor = isLight ? '#121212' : '#ffffff';
-      const gridColor = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
-      const accent = isLight ? '#2481cc' : '#3797f0';
-
-      wheelChart.options.scales.r.pointLabels.color = labelColor;
-      wheelChart.options.scales.r.grid.color = gridColor;
-      wheelChart.options.scales.r.angleLines.color = gridColor;
-      wheelChart.data.datasets[0].borderColor = accent;
-      wheelChart.data.datasets[0].pointBackgroundColor = accent;
+      wheelChart.options.scales.r.pointLabels.color = isLight ? '#121212' : '#ffffff';
+      wheelChart.options.scales.r.grid.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
+      wheelChart.options.scales.r.angleLines.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
       wheelChart.update();
     }
 
-    function updateScore(index, value) {
+    window.updateScore = function(index, value) {
       scores[index] = Number(value);
       document.getElementById(`val-${index}`).innerText = value;
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
-      localStorage.setItem('streletskayaThemeScores', JSON.stringify(scores));
-    }
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, tasks);
+      }
+    };
 
     function updateTemplates() {
       const t = translations[currentLang];
@@ -495,21 +446,21 @@
       });
     }
 
-    function applyTemplate() {
+    window.applyTemplate = function() {
       const tSelect = document.getElementById('templateSelect');
       if (tSelect.value) {
         document.getElementById('taskInput').value = tSelect.value;
       }
-    }
+    };
 
-    function setFilter(evt, filter) {
+    window.setFilter = function(evt, filter) {
       currentFilter = filter;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       evt.currentTarget.classList.add('active');
       renderTasks();
-    }
+    };
 
-    function renderTasks() {
+    window.renderTasks = function() {
       updateTemplates();
       const selectIdx = document.getElementById('taskCategorySelect').value || 0;
       const listEl = document.getElementById('taskList');
@@ -543,9 +494,9 @@
         `;
         listEl.appendChild(li);
       });
-    }
+    };
 
-    function addTask() {
+    window.addTask = function() {
       const input = document.getElementById('taskInput');
       const text = input.value.trim();
       const selectIdx = document.getElementById('taskCategorySelect').value || 0;
@@ -555,21 +506,27 @@
       tasks[selectIdx].push({ text, completed: false });
       input.value = '';
       document.getElementById('templateSelect').value = '';
-      localStorage.setItem('streletskayaThemeTasks', JSON.stringify(tasks));
       renderTasks();
-    }
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, tasks);
+      }
+    };
 
-    function toggleTask(catIdx, idx) {
+    window.toggleTask = function(catIdx, idx) {
       tasks[catIdx][idx].completed = !tasks[catIdx][idx].completed;
-      localStorage.setItem('streletskayaThemeTasks', JSON.stringify(tasks));
       renderTasks();
-    }
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, tasks);
+      }
+    };
 
-    function deleteTask(catIdx, idx) {
+    window.deleteTask = function(catIdx, idx) {
       tasks[catIdx].splice(idx, 1);
-      localStorage.setItem('streletskayaThemeTasks', JSON.stringify(tasks));
       renderTasks();
-    }
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, tasks);
+      }
+    };
 
     applyTheme();
     applyLanguage();
