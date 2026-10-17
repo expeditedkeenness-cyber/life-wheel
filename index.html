@@ -144,14 +144,6 @@
       transform: scale(0.99);
       transition: backdrop-filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
     }
-
-    body {
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      opacity: 1;
-      transform: scale(1);
-      transition: backdrop-filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease, background-color 0.5s ease, color 0.5s ease;
-    }
     
     .header-bar {
       display: flex; justify-content: space-between; align-items: center;
@@ -230,62 +222,4 @@
     .task-list { list-style: none; padding: 0; margin: 0; }
     .task-item {
       display: flex; align-items: center; gap: 8px;
-      background: var(--card-bg); padding: 10px 12px; margin-bottom: 8px;
-      border-radius: 10px; font-size: 13px; border: 1px solid var(--border-color);
-    }
-    .check-btn {
-      width: 20px; height: 20px; border-radius: 50%;
-      border: 2px solid var(--subtext-color); background: transparent; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; color: transparent; font-size: 12px;
-    }
-    .task-item.completed .check-btn { background: var(--success-color); border-color: var(--success-color); color: #fff; }
-    .task-item.completed .task-text { text-decoration: line-through; color: var(--subtext-color); }
-    .task-cat-badge {
-      font-size: 10px; padding: 3px 7px; border-radius: 6px;
-      background: var(--card-sub-bg); color: var(--accent-color); font-weight: 600; flex-shrink: 0; border: 1px solid var(--border-color);
-    }
-    .task-text { flex: 1; min-width: 0; word-break: break-word; }
-    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; padding: 0 4px; flex-shrink: 0; }
-
-    .calendar-card { background: var(--card-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; }
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 13px; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; }
-    .cal-day-head { font-weight: bold; color: var(--subtext-color); padding: 4px 0; }
-    .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; }
-    .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
-    .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
-
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 9999; padding: 16px; box-sizing: border-box;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-    }
-    .modal-overlay.show { opacity: 1; pointer-events: auto; }
-    .modal-card {
-      background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 16px; width: 100%; max-width: 320px; padding: 20px;
-      box-sizing: border-box; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .modal-card h3 { color: var(--accent-color); margin-top: 0; font-size: 18px; }
-    .modal-card p { font-size: 13px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; text-align: left; }
-    .modal-buttons { display: flex; gap: 8px; }
-  </style>
-</head>
-<body>
-
-  <!-- Первичное приветственное окно при первом входе (Язык + Имя) -->
-  <div class="modal-overlay" id="welcomeModal">
-    <div class="modal-card">
-      <h3 style="text-align: center;">Вітаю! / Welcome!</h3>
-      <p style="text-align: center; font-size: 12px; color: var(--subtext-color);">Оберіть мову / Choose language</p>
-      
-      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <button type="button" class="primary-btn" id="langUaBtn" onclick="setInitialLang('ua')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇺🇦 Українська</button>
-        <button type="button" class="primary-btn" id="langEnBtn" onclick="setInitialLang('en')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇬🇧 English</button>
-      </div>
-
-      <p id="welcomePromptText" style="text-align: center; font-size: 12px; margin-bottom: 6px;">Введіть ваше ім'я (для відображення в шапці):</p>
-      <input type="text" id="welcomeNameInput" placeholder="Ваше ім'я..." style="width: 100%; margin-
+      background: var(--card-bg); padding: 10px 
