@@ -48,23 +48,23 @@
         }
         await loadUserData(user.uid);
       } else {
-        authBtn.innerText = '🌐 Войти через Google';
+        authBtn.innerText = '🌐 Войти';
         authBtn.onclick = window.loginWithGoogle;
         userAvatar.style.display = 'none';
       }
     });
 
-    window.saveUserData = async function(newScores, newTasks) {
+    window.saveUserData = async function(newScores, newTaskList) {
       const user = auth.currentUser;
       if (!user) {
         localStorage.setItem('streletskayaThemeScores', JSON.stringify(newScores));
-        localStorage.setItem('streletskayaThemeTasks', JSON.stringify(newTasks));
+        localStorage.setItem('streletskayaThemeTasksV2', JSON.stringify(newTaskList));
         return;
       }
       try {
         await setDoc(doc(db, "users", user.uid), {
           scores: newScores,
-          tasks: newTasks,
+          tasksV2: newTaskList,
           updatedAt: new Date()
         });
       } catch (e) {
@@ -82,9 +82,9 @@
             scores = data.scores;
             updateSlidersAndChart();
           }
-          if (data.tasks) {
-            tasks = data.tasks;
-            renderTasks();
+          if (data.tasksV2) {
+            taskList = data.tasksV2;
+            renderTasksTab();
           }
         }
       } catch (e) {
@@ -98,20 +98,24 @@
       --bg-color: #121212;
       --text-color: #ffffff;
       --card-bg: #1e1e1e;
+      --card-sub-bg: #282828;
       --accent-color: #3797f0;
       --accent-text: #ffffff;
-      --border-color: rgba(255, 255, 255, 0.15);
+      --border-color: rgba(255, 255, 255, 0.12);
       --subtext-color: #b0b0b0;
+      --success-color: #4caf50;
     }
 
     body.light-theme {
-      --bg-color: #ffffff;
+      --bg-color: #f4f5f7;
       --text-color: #121212;
-      --card-bg: #f4f5f7;
+      --card-bg: #ffffff;
+      --card-sub-bg: #eaeaea;
       --accent-color: #2481cc;
       --accent-text: #ffffff;
-      --border-color: rgba(0, 0, 0, 0.12);
+      --border-color: rgba(0, 0, 0, 0.1);
       --subtext-color: #666666;
+      --success-color: #2e7d32;
     }
 
     body {
@@ -148,21 +152,48 @@
     .info-card h4 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 14px; }
     .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-color); }
 
+    /* UI Компоненты Задач */
+    .section-card { background: var(--card-bg); border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+    .section-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
+    
+    select, input[type="text"], input[type="date"] {
+      width: 100%; padding: 9px 12px; margin-bottom: 8px; box-sizing: border-box;
+      border-radius: 8px; border: 1px solid var(--border-color);
+      background: var(--card-sub-bg); color: var(--text-color); font-size: 13px; outline: none;
+    }
+
+    .primary-btn { width: 100%; padding: 10px; background-color: var(--accent-color); color: var(--accent-text); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
+    
+    .sub-tabs { display: flex; gap: 4px; background: var(--card-sub-bg); padding: 3px; border-radius: 8px; margin-bottom: 12px; }
+    .sub-tab-btn { flex: 1; padding: 6px; font-size: 11px; font-weight: bold; border: none; background: transparent; color: var(--subtext-color); border-radius: 6px; cursor: pointer; text-align: center; }
+    .sub-tab-btn.active { background: var(--card-bg); color: var(--accent-color); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+    /* Календарь */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; font-size: 13px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; }
+    .cal-day-head { font-weight: bold; color: var(--subtext-color); padding: 4px 0; }
+    .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; }
+    .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
+    .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
+    .cal-day.active.has-done::after { background: #fff; }
+
+    /* Список задач */
+    .task-list { list-style: none; padding: 0; margin: 0; }
+    .task-item { display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); padding: 10px 12px; margin-bottom: 6px; border-radius: 8px; font-size: 13px; border: 1px solid var(--border-color); }
+    .task-item.completed { opacity: 0.75; }
+    .task-item.completed .task-text { text-decoration: line-through; color: var(--subtext-color); }
+    .task-cat-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--card-sub-bg); color: var(--accent-color); margin-right: 8px; font-weight: 500; }
+    .task-date-badge { font-size: 10px; color: var(--subtext-color); margin-left: auto; margin-right: 8px; }
+    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; padding: 0 4px; }
+
     .progress-box { background: var(--card-bg); border-radius: 8px; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border-color); }
     .progress-bar-bg { background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
     .progress-bar-fill { background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s ease; }
     .progress-text { font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; }
-
-    select, input[type="text"] { width: 100%; padding: 10px; margin-bottom: 8px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); font-size: 13px; }
-    .primary-btn { width: 100%; padding: 10px; background-color: var(--accent-color); color: var(--accent-text); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-    .filter-box { display: flex; gap: 6px; margin-bottom: 10px; }
-    .filter-btn { flex: 1; padding: 6px; font-size: 11px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--subtext-color); border-radius: 6px; cursor: pointer; }
-    .filter-btn.active { background: var(--accent-color); color: var(--accent-text); border-color: var(--accent-color); }
-
-    .task-list { list-style: none; padding: 0; margin: 0; }
-    .task-item { display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); padding: 10px; margin-bottom: 6px; border-radius: 8px; font-size: 13px; border: 1px solid var(--border-color); }
-    .task-item.completed span { text-decoration: line-through; color: var(--subtext-color); }
-    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; }
+    
+    .archive-filters { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; }
+    .chip-btn { white-space: nowrap; font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-sub-bg); color: var(--subtext-color); cursor: pointer; }
+    .chip-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
   </style>
 </head>
 <body>
@@ -183,6 +214,7 @@
     <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
   </div>
 
+  <!-- Вкладка Колеса -->
   <div id="wheelTab" class="tab-content active">
     <div class="chart-container">
       <canvas id="wheelChart"></canvas>
@@ -190,37 +222,81 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
+  <!-- Вкладка Описания -->
   <div id="infoTab" class="tab-content">
     <div id="infoCardsContainer"></div>
   </div>
 
+  <!-- Переработанная Вкладка Задач -->
   <div id="tasksTab" class="tab-content">
-    <select id="taskCategorySelect" onchange="renderTasks()"></select>
-
-    <div class="progress-box">
-      <div class="progress-text">
-        <span id="progressLabel">Прогресс сферы</span>
-        <span id="progressPercent">0%</span>
-      </div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="progressBarFill"></div>
-      </div>
+    
+    <!-- Переключатель режима задач -->
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" onclick="switchTaskSubTab(event, 'activeTasks')" id="subTabActive">📋 В работе</button>
+      <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'calendarTasks')" id="subTabCalendar">📅 Календарь</button>
+      <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'archiveTasks')" id="subTabArchive">📂 Архив и История</button>
     </div>
 
-    <select id="templateSelect" onchange="applyTemplate()">
-      <option value="" id="templatePlaceholder">💡 Выбрать микро-шаг...</option>
-    </select>
+    <!-- Форма создания задачи (Доступна всегда) -->
+    <div class="section-card">
+      <div class="section-title" id="createTitle">Новый микро-шаг</div>
+      
+      <div style="display: flex; gap: 6px;">
+        <select id="taskCategorySelect" style="flex: 1;" onchange="updateTemplates()"></select>
+        <input type="date" id="taskDueDate" style="width: 130px;">
+      </div>
 
-    <input type="text" id="taskInput" placeholder="Или введите свою задачу...">
-    <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить микро-шаг</button>
+      <select id="templateSelect" onchange="applyTemplate()">
+        <option value="" id="templatePlaceholder">💡 Выбрать микро-шаг...</option>
+      </select>
 
-    <div class="filter-box">
-      <button class="filter-btn active" onclick="setFilter(event, 'all')" id="filterAll">Все</button>
-      <button class="filter-btn" onclick="setFilter(event, 'active')" id="filterActive">В работе</button>
-      <button class="filter-btn" onclick="setFilter(event, 'completed')" id="filterCompleted">Готово</button>
+      <input type="text" id="taskInput" placeholder="Или введите свою задачу...">
+      <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить задачу</button>
     </div>
 
-    <ul class="task-list" id="taskList"></ul>
+    <!-- Раздел: Активные задачи -->
+    <div id="activeTasksSection">
+      <div class="progress-box">
+        <div class="progress-text">
+          <span id="progressLabel">Прогресс сферы</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+      </div>
+      
+      <ul class="task-list" id="activeTaskList"></ul>
+    </div>
+
+    <!-- Раздел: Календарь -->
+    <div id="calendarTasksSection" style="display: none;">
+      <div class="section-card">
+        <div class="calendar-header">
+          <button class="btn-toggle" onclick="changeMonth(-1)">&lt;</button>
+          <span id="calMonthYear">Октябрь 2026</span>
+          <button class="btn-toggle" onclick="changeMonth(1)">&gt;</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+      
+      <div class="section-title" id="calSelectedDateTitle">Задачи на выбранный день</div>
+      <ul class="task-list" id="calendarTaskList"></ul>
+    </div>
+
+    <!-- Раздел: Архив и История -->
+    <div id="archiveTasksSection" style="display: none;">
+      <div class="archive-filters">
+        <button class="chip-btn active" onclick="setArchiveFilter(event, 'all')" id="archAll">Все время</button>
+        <button class="chip-btn" onclick="setArchiveFilter(event, 'today')" id="archToday">Сегодня</button>
+        <button class="chip-btn" onclick="setArchiveFilter(event, 'week')" id="archWeek">За 7 дней</button>
+        <button class="chip-btn" onclick="setArchiveFilter(event, 'month')" id="archMonth">За месяц</button>
+        <button class="chip-btn" onclick="setArchiveFilter(event, 'year')" id="archYear">1 год назад</button>
+      </div>
+
+      <ul class="task-list" id="archiveTaskList"></ul>
+    </div>
+
   </div>
 
   <script>
@@ -231,11 +307,13 @@
       ru: {
         appTitle: '📊 Колесо Баланса',
         tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
-        progressLabel: 'Прогресс сферы',
+        subTabActive: '📋 В работе', subTabCalendar: '📅 Календарь', subTabArchive: '📂 Архив',
+        createTitle: 'Новый микро-шаг',
+        progressLabel: 'Общий прогресс активностей',
         templatePlaceholder: '💡 Выбрать готовый микро-шаг (5-10 мин)...',
         taskInputPlaceholder: 'Или введите свою задачу...',
         addBtn: 'Добавить микро-шаг',
-        filterAll: 'Все', filterActive: 'В работе', filterCompleted: 'Готово',
+        archAll: 'Все время', archToday: 'Сегодня', archWeek: 'За 7 дней', archMonth: 'За месяц', archYear: '1 год назад',
         langBtn: '🌐 UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         descriptions: [
@@ -262,11 +340,13 @@
       ua: {
         appTitle: '📊 Колесо Балансу',
         tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
-        progressLabel: 'Прогрес сфери',
+        subTabActive: '📋 В роботі', subTabCalendar: '📅 Календар', subTabArchive: '📂 Архів',
+        createTitle: 'Новий мікро-крок',
+        progressLabel: 'Загальний прогрес активностей',
         templatePlaceholder: '💡 Обрати мікро-крок (5-10 хв)...',
         taskInputPlaceholder: 'Або введіть своє завдання...',
         addBtn: 'Додати мікро-крок',
-        filterAll: 'Усі', filterActive: 'В роботі', filterCompleted: 'Готово',
+        archAll: 'Весь час', archToday: 'Сьогодні', archWeek: 'За 7 днів', archMonth: 'За місяць', archYear: '1 рік тому',
         langBtn: '🌐 RU',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         descriptions: [
@@ -281,26 +361,46 @@
         ],
         templates: {
           'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
-          'Сім’я': ['Написати близькому', 'Спілкування без телефонов', 'Подякувати рідним'],
+          'Сім’я': ['Написати близькому', 'Спілкування без телефонів', 'Подякувати рідним'],
           'Друзі': ['Надіслати спогад другу', 'Запланувати зустріч', 'Дізнатися справи'],
           'Хобі': ['Приділити 10 хв хобі', 'Подивитися урок', 'Замовити матеріали'],
           'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
           'Здоров’я': ['Випити склянку води', 'Зробити розминку', 'Записатися до лікаря'],
           'Духовність': ['Записати 3 вдячності', 'Помедитувати', 'Зробити добру справу'],
-          'Саморазвитие': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
+          'Саморазвиток': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
         }
       }
     };
 
     let scores = JSON.parse(localStorage.getItem('streletskayaThemeScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
-    let tasks = JSON.parse(localStorage.getItem('streletskayaThemeTasks')) || {};
-    let currentFilter = 'all';
+    // Новая универсальная структура задач
+    let taskList = JSON.parse(localStorage.getItem('streletskayaThemeTasksV2')) || [];
+    
+    let activeSubTab = 'activeTasks';
+    let currentCalDate = new Date();
+    let selectedCalDayStr = new Date().toISOString().split('T')[0];
+    let archiveFilterMode = 'all';
+
+    // Установка даты по умолчанию в инпуте
+    document.getElementById('taskDueDate').value = selectedCalDayStr;
 
     window.openTab = function(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
+    };
+
+    window.switchTaskSubTab = function(evt, subTabId) {
+      activeSubTab = subTabId;
+      document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+      evt.currentTarget.classList.add('active');
+
+      document.getElementById('activeTasksSection').style.display = subTabId === 'activeTasks' ? 'block' : 'none';
+      document.getElementById('calendarTasksSection').style.display = subTabId === 'calendarTasks' ? 'block' : 'none';
+      document.getElementById('archiveTasksSection').style.display = subTabId === 'archiveTasks' ? 'block' : 'none';
+
+      renderTasksTab();
     };
 
     window.toggleTheme = function() {
@@ -332,13 +432,22 @@
       document.getElementById('tab1').innerText = t.tab1;
       document.getElementById('tab2').innerText = t.tab2;
       document.getElementById('tab3').innerText = t.tab3;
+      
+      document.getElementById('subTabActive').innerText = t.subTabActive;
+      document.getElementById('subTabCalendar').innerText = t.subTabCalendar;
+      document.getElementById('subTabArchive').innerText = t.subTabArchive;
+      document.getElementById('createTitle').innerText = t.createTitle;
+
       document.getElementById('progressLabel').innerText = t.progressLabel;
       document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
       document.getElementById('addBtn').innerText = t.addBtn;
-      document.getElementById('filterAll').innerText = t.filterAll;
-      document.getElementById('filterActive').innerText = t.filterActive;
-      document.getElementById('filterCompleted').innerText = t.filterCompleted;
       document.getElementById('langBtn').innerText = t.langBtn;
+
+      document.getElementById('archAll').innerText = t.archAll;
+      document.getElementById('archToday').innerText = t.archToday;
+      document.getElementById('archWeek').innerText = t.archWeek;
+      document.getElementById('archMonth').innerText = t.archMonth;
+      document.getElementById('archYear').innerText = t.archYear;
 
       const infoContainer = document.getElementById('infoCardsContainer');
       infoContainer.innerHTML = '';
@@ -355,7 +464,7 @@
       updateSlidersAndChart();
 
       const select = document.getElementById('taskCategorySelect');
-      const selectedCatIndex = select.value || 0;
+      const selectedIndex = select.value || 0;
       select.innerHTML = '';
       t.categories.forEach((cat, idx) => {
         const opt = document.createElement('option');
@@ -363,9 +472,9 @@
         opt.textContent = cat;
         select.appendChild(opt);
       });
-      select.value = selectedCatIndex;
+      select.value = selectedIndex;
 
-      renderTasks();
+      renderTasksTab();
     }
 
     const ctx = document.getElementById('wheelChart').getContext('2d');
@@ -428,11 +537,11 @@
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
       if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
+        window.saveUserData(scores, taskList);
       }
     };
 
-    function updateTemplates() {
+    window.updateTemplates = function() {
       const t = translations[currentLang];
       const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
       const categoryName = t.categories[categoryIndex];
@@ -448,7 +557,7 @@
           templateSelect.appendChild(opt);
         });
       }
-    }
+    };
 
     window.applyTemplate = function() {
       const templateSelect = document.getElementById('templateSelect');
@@ -458,77 +567,209 @@
       }
     };
 
-    window.renderTasks = function() {
+    /* Логика задач */
+    window.addTask = function() {
+      const catIdx = document.getElementById('taskCategorySelect').value || 0;
+      const input = document.getElementById('taskInput');
+      const dateVal = document.getElementById('taskDueDate').value || new Date().toISOString().split('T')[0];
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      const newTask = {
+        id: Date.now().toString(),
+        text: text,
+        catIndex: Number(catIdx),
+        completed: false,
+        createdAt: dateVal,
+        completedAt: null
+      };
+
+      taskList.push(newTask);
+      input.value = '';
+      document.getElementById('templateSelect').value = '';
+
+      renderTasksTab();
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, taskList);
+      }
+    };
+
+    window.toggleTask = function(taskId) {
+      const task = taskList.find(t => t.id === taskId);
+      if (task) {
+        task.completed = !task.completed;
+        task.completedAt = task.completed ? new Date().toISOString().split('T')[0] : null;
+        renderTasksTab();
+        if (typeof window.saveUserData === 'function') {
+          window.saveUserData(scores, taskList);
+        }
+      }
+    };
+
+    window.deleteTask = function(taskId) {
+      taskList = taskList.filter(t => t.id !== taskId);
+      renderTasksTab();
+      if (typeof window.saveUserData === 'function') {
+        window.saveUserData(scores, taskList);
+      }
+    };
+
+    function renderTasksTab() {
       updateTemplates();
-      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
-      const categoryTasks = tasks[categoryIndex] || [];
-      const listEl = document.getElementById('taskList');
+      if (activeSubTab === 'activeTasks') renderActiveTasks();
+      else if (activeSubTab === 'calendarTasks') renderCalendarView();
+      else if (activeSubTab === 'archiveTasks') renderArchiveTasks();
+    }
+
+    function renderActiveTasks() {
+      const listEl = document.getElementById('activeTaskList');
       listEl.innerHTML = '';
+      const t = translations[currentLang];
 
-      let completedCount = 0;
-      categoryTasks.forEach((task, idx) => {
-        if (task.completed) completedCount++;
-        
-        if (currentFilter === 'active' && task.completed) return;
-        if (currentFilter === 'completed' && !task.completed) return;
+      const activeList = taskList.filter(t => !t.completed);
+      const totalCount = taskList.length;
+      const completedCount = taskList.filter(t => t.completed).length;
 
+      activeList.forEach(task => {
         const li = document.createElement('li');
-        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.className = 'task-item';
         li.innerHTML = `
-          <span onclick="toggleTask(${categoryIndex}, ${idx})" style="cursor: pointer; flex: 1; margin-right: 10px;">${task.text}</span>
-          <button class="delete-btn" onclick="deleteTask(${categoryIndex}, ${idx})">&times;</button>
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer; flex:1;">${task.text}</span>
+          <span class="task-date-badge">${task.createdAt}</span>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
         `;
         listEl.appendChild(li);
       });
 
-      const total = categoryTasks.length;
-      const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+      const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
       document.getElementById('progressPercent').innerText = `${percent}%`;
       document.getElementById('progressBarFill').style.width = `${percent}%`;
+    }
+
+    /* Календарь */
+    window.changeMonth = function(delta) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + delta);
+      renderCalendarView();
     };
 
-    window.addTask = function() {
-      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
-      const taskInput = document.getElementById('taskInput');
-      const text = taskInput.value.trim();
-      if (!text) return;
+    function renderCalendarView() {
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+      const t = translations[currentLang];
 
-      if (!tasks[categoryIndex]) {
-        tasks[categoryIndex] = [];
-      }
-      tasks[categoryIndex].push({ text: text, completed: false });
-      taskInput.value = '';
-      document.getElementById('templateSelect').value = '';
-      renderTasks();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
+      const monthNames = currentLang === 'ru' 
+        ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+        : ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+      
+      document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
 
-    window.toggleTask = function(catIdx, taskIdx) {
-      tasks[catIdx][taskIdx].completed = !tasks[catIdx][taskIdx].completed;
-      renderTasks();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
 
-    window.deleteTask = function(catIdx, taskIdx) {
-      tasks[catIdx].splice(taskIdx, 1);
-      renderTasks();
-      if (typeof window.saveUserData === 'function') {
-        window.saveUserData(scores, tasks);
-      }
-    };
+      const dayHeads = currentLang === 'ru' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] : ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+      dayHeads.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'cal-day-head';
+        div.innerText = d;
+        grid.appendChild(div);
+      });
 
-    window.setFilter = function(evt, filter) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      const firstDayIdx = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDayIdx; i++) {
+        grid.appendChild(document.createElement('div'));
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const div = document.createElement('div');
+        div.className = `cal-day ${dateStr === selectedCalDayStr ? 'active' : ''}`;
+        
+        const hasDone = taskList.some(t => t.completedAt === dateStr);
+        if (hasDone) div.classList.add('has-done');
+
+        div.innerText = day;
+        div.onclick = () => {
+          selectedCalDayStr = dateStr;
+          renderCalendarView();
+        };
+        grid.appendChild(div);
+      }
+
+      // Отрисовка задач за выбранный день
+      const dayTasks = taskList.filter(t => t.createdAt === selectedCalDayStr || t.completedAt === selectedCalDayStr);
+      const listEl = document.getElementById('calendarTaskList');
+      listEl.innerHTML = '';
+
+      if (dayTasks.length === 0) {
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">Нет задач на ${selectedCalDayStr}</li>`;
+        return;
+      }
+
+      dayTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer; flex:1;">${task.text}</span>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    /* Архив */
+    window.setArchiveFilter = function(evt, mode) {
+      archiveFilterMode = mode;
+      document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
       evt.currentTarget.classList.add('active');
-      renderTasks();
+      renderArchiveTasks();
     };
 
-    // Initial setup on load
+    function renderArchiveTasks() {
+      const listEl = document.getElementById('archiveTaskList');
+      listEl.innerHTML = '';
+      const t = translations[currentLang];
+
+      let completedTasks = taskList.filter(t => t.completed);
+      const now = new Date();
+
+      if (archiveFilterMode === 'today') {
+        const todayStr = now.toISOString().split('T')[0];
+        completedTasks = completedTasks.filter(t => t.completedAt === todayStr);
+      } else if (archiveFilterMode === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= weekAgo);
+      } else if (archiveFilterMode === 'month') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= monthAgo);
+      } else if (archiveFilterMode === 'year') {
+        const yearAgoStr = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().split('T')[0];
+        completedTasks = completedTasks.filter(t => t.completedAt === yearAgoStr);
+      }
+
+      if (completedTasks.length === 0) {
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:15px;">В архиве пока нет выполненных задач за данный период</li>`;
+        return;
+      }
+
+      completedTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item completed';
+        li.innerHTML = `
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text" style="flex:1;">${task.text}</span>
+          <span class="task-date-badge">✓ ${task.completedAt}</span>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    // Инициализация
     applyTheme();
     applyLanguage();
   </script>
