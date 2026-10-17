@@ -12,7 +12,6 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Ваши конфигурированные ключи Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAdypqxdS_w2bp_ubPg4_9YoNXq7HLIBIE",
       authDomain: "life-wheel-5e119.firebaseapp.com",
@@ -282,7 +281,7 @@
         ],
         templates: {
           'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
-          'Сім’я': ['Написати близькому', 'Спілкування без телефонів', 'Подякувати рідним'],
+          'Сім’я': ['Написати близькому', 'Спілкування без телефонов', 'Подякувати рідним'],
           'Друзі': ['Надіслати спогад другу', 'Запланувати зустріч', 'Дізнатися справи'],
           'Хобі': ['Приділити 10 хв хобі', 'Подивитися урок', 'Замовити матеріали'],
           'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
@@ -356,6 +355,7 @@
       updateSlidersAndChart();
 
       const select = document.getElementById('taskCategorySelect');
+      const selectedCatIndex = select.value || 0;
       select.innerHTML = '';
       t.categories.forEach((cat, idx) => {
         const opt = document.createElement('option');
@@ -363,6 +363,7 @@
         opt.textContent = cat;
         select.appendChild(opt);
       });
+      select.value = selectedCatIndex;
 
       renderTasks();
     }
@@ -433,78 +434,70 @@
 
     function updateTemplates() {
       const t = translations[currentLang];
-      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
-      const catNameRu = translations.ru.categories[selectIdx];
-      const tSelect = document.getElementById('templateSelect');
-      tSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
+      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
+      const categoryName = t.categories[categoryIndex];
+      const templateSelect = document.getElementById('templateSelect');
       
-      (t.templates[catNameRu] || []).forEach(tText => {
-        const opt = document.createElement('option');
-        opt.value = tText;
-        opt.textContent = tText;
-        tSelect.appendChild(opt);
-      });
+      templateSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
+      
+      if (t.templates[categoryName]) {
+        t.templates[categoryName].forEach(tmpl => {
+          const opt = document.createElement('option');
+          opt.value = tmpl;
+          opt.textContent = tmpl;
+          templateSelect.appendChild(opt);
+        });
+      }
     }
 
     window.applyTemplate = function() {
-      const tSelect = document.getElementById('templateSelect');
-      if (tSelect.value) {
-        document.getElementById('taskInput').value = tSelect.value;
+      const templateSelect = document.getElementById('templateSelect');
+      const taskInput = document.getElementById('taskInput');
+      if (templateSelect.value) {
+        taskInput.value = templateSelect.value;
       }
-    };
-
-    window.setFilter = function(evt, filter) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      evt.currentTarget.classList.add('active');
-      renderTasks();
     };
 
     window.renderTasks = function() {
       updateTemplates();
-      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
+      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
+      const categoryTasks = tasks[categoryIndex] || [];
       const listEl = document.getElementById('taskList');
       listEl.innerHTML = '';
-      
-      if (!tasks[selectIdx]) tasks[selectIdx] = [];
-      const catTasks = tasks[selectIdx];
 
-      const total = catTasks.length;
-      const completedCount = catTasks.filter(t => t.completed).length;
-      const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-      document.getElementById('progressPercent').innerText = percent + '%';
-      document.getElementById('progressBarFill').style.width = percent + '%';
+      let completedCount = 0;
+      categoryTasks.forEach((task, idx) => {
+        if (task.completed) completedCount++;
+        
+        if (currentFilter === 'active' && task.completed) return;
+        if (currentFilter === 'completed' && !task.completed) return;
 
-      const filteredTasks = catTasks.filter(t => {
-        if (currentFilter === 'active') return !t.completed;
-        if (currentFilter === 'completed') return t.completed;
-        return true;
-      });
-
-      filteredTasks.forEach((task, idx) => {
-        const realIdx = catTasks.indexOf(task);
         const li = document.createElement('li');
         li.className = `task-item ${task.completed ? 'completed' : ''}`;
         li.innerHTML = `
-          <label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;">
-            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${selectIdx}, ${realIdx})">
-            <span>${task.text}</span>
-          </label>
-          <button class="delete-btn" onclick="deleteTask(${selectIdx}, ${realIdx})">×</button>
+          <span onclick="toggleTask(${categoryIndex}, ${idx})" style="cursor: pointer; flex: 1; margin-right: 10px;">${task.text}</span>
+          <button class="delete-btn" onclick="deleteTask(${categoryIndex}, ${idx})">&times;</button>
         `;
         listEl.appendChild(li);
       });
+
+      const total = categoryTasks.length;
+      const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+      document.getElementById('progressPercent').innerText = `${percent}%`;
+      document.getElementById('progressBarFill').style.width = `${percent}%`;
     };
 
     window.addTask = function() {
-      const input = document.getElementById('taskInput');
-      const text = input.value.trim();
-      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
+      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
+      const taskInput = document.getElementById('taskInput');
+      const text = taskInput.value.trim();
       if (!text) return;
 
-      if (!tasks[selectIdx]) tasks[selectIdx] = [];
-      tasks[selectIdx].push({ text, completed: false });
-      input.value = '';
+      if (!tasks[categoryIndex]) {
+        tasks[categoryIndex] = [];
+      }
+      tasks[categoryIndex].push({ text: text, completed: false });
+      taskInput.value = '';
       document.getElementById('templateSelect').value = '';
       renderTasks();
       if (typeof window.saveUserData === 'function') {
@@ -512,22 +505,30 @@
       }
     };
 
-    window.toggleTask = function(catIdx, idx) {
-      tasks[catIdx][idx].completed = !tasks[catIdx][idx].completed;
+    window.toggleTask = function(catIdx, taskIdx) {
+      tasks[catIdx][taskIdx].completed = !tasks[catIdx][taskIdx].completed;
       renderTasks();
       if (typeof window.saveUserData === 'function') {
         window.saveUserData(scores, tasks);
       }
     };
 
-    window.deleteTask = function(catIdx, idx) {
-      tasks[catIdx].splice(idx, 1);
+    window.deleteTask = function(catIdx, taskIdx) {
+      tasks[catIdx].splice(taskIdx, 1);
       renderTasks();
       if (typeof window.saveUserData === 'function') {
         window.saveUserData(scores, tasks);
       }
     };
 
+    window.setFilter = function(evt, filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      evt.currentTarget.classList.add('active');
+      renderTasks();
+    };
+
+    // Initial setup on load
     applyTheme();
     applyLanguage();
   </script>
