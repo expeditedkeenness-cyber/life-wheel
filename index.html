@@ -3,24 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Колесо Баланса по Е. Стрелецкой</title>
+  <title>Колесо Баланса</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #121212);
+      --text-color: var(--tg-theme-text-color, #e0e0e0);
+      --card-bg: var(--tg-theme-secondary-bg-color, #1e1e1e);
+      --accent-color: var(--tg-theme-button-color, #3797f0);
+      --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --subtext-color: #a0a0a0;
+    }
+
+    /* Светлая тема, если Telegram не переключен в Dark */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #121212;
+        --card-bg: #f4f5f7;
+        --accent-color: #2481cc;
+        --border-color: rgba(0, 0, 0, 0.1);
+        --subtext-color: #666666;
+      }
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--tg-theme-bg-color, #ffffff);
-      color: var(--tg-theme-text-color, #000000);
+      background-color: var(--bg-color);
+      color: var(--text-color);
       margin: 0;
       padding: 12px;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
     
+    /* Шапка с кнопкой языка */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .lang-btn {
+      background: var(--card-bg);
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
     /* Навигация (Вкладки) */
     .nav-tabs {
       display: flex;
       justify-content: space-between;
-      border-bottom: 2px solid #e0e0e0;
+      border-bottom: 1px solid var(--border-color);
       margin-bottom: 15px;
     }
     .tab-btn {
@@ -30,52 +71,56 @@
       background: none;
       font-size: 12px;
       font-weight: bold;
-      color: #666;
+      color: var(--subtext-color);
       cursor: pointer;
       border-bottom: 3px solid transparent;
       text-align: center;
+      transition: all 0.2s;
     }
     .tab-btn.active {
-      color: #2481cc;
-      border-bottom-color: #2481cc;
+      color: var(--accent-color);
+      border-bottom-color: var(--accent-color);
     }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
     .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
-    .slider-group { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
     .slider-group label { font-size: 13px; flex: 1; font-weight: 500; }
-    .slider-group input { width: 40%; }
-    .slider-group span { width: 25px; text-align: right; font-weight: bold; }
+    .slider-group input { width: 40%; accent-color: var(--accent-color); }
+    .slider-group span { width: 25px; text-align: right; font-weight: bold; color: var(--accent-color); }
 
     /* Вкладка: Описание */
     .info-card {
-      background: rgba(0,0,0,0.03);
-      border-radius: 8px;
+      background: var(--card-bg);
+      border-radius: 10px;
       padding: 12px;
       margin-bottom: 10px;
-      border-left: 4px solid #2481cc;
+      border-left: 4px solid var(--accent-color);
+      border: 1px solid var(--border-color);
+      border-left-width: 4px;
     }
-    .info-card h4 { margin: 0 0 6px 0; color: #2481cc; font-size: 14px; }
-    .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: #333; }
+    .info-card h4 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 14px; }
+    .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-color); opacity: 0.9; }
 
-    /* Усовершенствованный модуль Задачи */
+    /* Модуль Задачи */
     .progress-box {
-      background: #f0f4f8;
+      background: var(--card-bg);
       border-radius: 8px;
       padding: 10px;
       margin-bottom: 12px;
+      border: 1px solid var(--border-color);
     }
     .progress-bar-bg {
-      background: #e0e0e0;
+      background: var(--border-color);
       height: 8px;
       border-radius: 4px;
       overflow: hidden;
       margin-top: 6px;
     }
     .progress-bar-fill {
-      background: #2481cc;
+      background: var(--accent-color);
       height: 100%;
       width: 0%;
       transition: width 0.3s ease;
@@ -85,7 +130,6 @@
       font-weight: bold;
       display: flex;
       justify-content: space-between;
-      color: #333;
     }
 
     select, input[type="text"] {
@@ -93,17 +137,19 @@
       padding: 10px;
       margin-bottom: 8px;
       box-sizing: border-box;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-color);
       font-size: 13px;
     }
     .primary-btn {
       width: 100%;
       padding: 10px;
-      background-color: #2481cc;
-      color: white;
+      background-color: var(--accent-color);
+      color: var(--accent-text);
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
       margin-bottom: 10px;
@@ -117,15 +163,16 @@
       flex: 1;
       padding: 6px;
       font-size: 11px;
-      border: 1px solid #ccc;
-      background: #fff;
-      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--subtext-color);
+      border-radius: 6px;
       cursor: pointer;
     }
     .filter-btn.active {
-      background: #2481cc;
-      color: #fff;
-      border-color: #2481cc;
+      background: var(--accent-color);
+      color: var(--accent-text);
+      border-color: var(--accent-color);
     }
 
     .task-list { list-style: none; padding: 0; margin: 0; }
@@ -133,23 +180,30 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(0,0,0,0.03);
-      padding: 8px 10px;
+      background: var(--card-bg);
+      padding: 10px;
       margin-bottom: 6px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 13px;
+      border: 1px solid var(--border-color);
     }
-    .task-item.completed span { text-decoration: line-through; color: #888; }
-    .delete-btn { background: none; border: none; color: #ff4d4d; cursor: pointer; font-weight: bold; font-size: 16px; }
+    .task-item.completed span { text-decoration: line-through; color: var(--subtext-color); }
+    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; }
   </style>
 </head>
 <body>
 
+  <!-- Шапка -->
+  <div class="header-bar">
+    <span style="font-weight: bold; font-size: 14px;" id="appTitle">📊 Колесо Баланса</span>
+    <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">🌐 UA</button>
+  </div>
+
   <!-- Навигация -->
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')">📊 Колесо</button>
-    <button class="tab-btn" onclick="openTab(event, 'infoTab')">📖 Описание</button>
-    <button class="tab-btn" onclick="openTab(event, 'tasksTab')">✅ Задачи</button>
+    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
+    <button class="tab-btn" onclick="openTab(event, 'infoTab')" id="tab2">📖 Описание</button>
+    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
   </div>
 
   <!-- Вкладка 1: Диаграмма -->
@@ -160,51 +214,18 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
-  <!-- Вкладка 2: Авторское описание 8 сфер по Е. Стрелецкой -->
+  <!-- Вкладка 2: Описание сфер -->
   <div id="infoTab" class="tab-content">
-    <div class="info-card">
-      <h4>1. Работа и Карьера</h4>
-      <p>Профессиональная самореализация, социальная востребованность и высокий уровень мастерства. Перекос или провал в работе создает чувство бессмысленности труда.</p>
-    </div>
-    <div class="info-card">
-      <h4>2. Семья и Близкие</h4>
-      <p>Близкие партнерские или семейные отношения. Зона эмоциональной безопасности, любви и глубокого привязания к близким людям.</p>
-    </div>
-    <div class="info-card">
-      <h4>3. Друзья и Окружение</h4>
-      <p>Качественный социальный круг единомышленников, с которыми можно разделять интересы, общаться без масок и получать поддержку.</p>
-    </div>
-    <div class="info-card">
-      <h4>4. Хобби и Творчество</h4>
-      <p>Деятельность из компонента «ХОЧУ», а не «НАДО». Пространство свободной игры, увлечений и творчества, дающее дофаминовый ресурс.</p>
-    </div>
-    <div class="info-card">
-      <h4>5. Отдых и Восстановление</h4>
-      <p>Соблюдение психогигиены, переключение от дел и полноценное восстановление нервной системы для профилактики эмоционального выгорания.</p>
-    </div>
-    <div class="info-card">
-      <h4>6. Здоровье и Тело</h4>
-      <p>Физическое самочувствие, сон, рацион питания, регулярные нагрузки и внимание к сигналам тела. База для всей психической энергии.</p>
-    </div>
-    <div class="info-card">
-      <h4>7. Духовность и Смысл</h4>
-      <p>Четкая экзистенциальная концепция: субъективное ощущение предназначения, осознание ответа на вопрос «зачем я живу» и осознанность.</p>
-    </div>
-    <div class="info-card">
-      <h4>8. Саморазвитие и Рост</h4>
-      <p>Изучение нового, расширение кругозора, освоение навыков, путешествия и работа с собственными мышлением и психологией.</p>
-    </div>
+    <div id="infoCardsContainer"></div>
   </div>
 
-  <!-- Вкладка 3: Усовершенствованный модуль Задачи -->
+  <!-- Вкладка 3: Модуль Задачи -->
   <div id="tasksTab" class="tab-content">
-    <!-- Выбор сферы -->
     <select id="taskCategorySelect" onchange="renderTasks()"></select>
 
-    <!-- Прогресс выполнения -->
     <div class="progress-box">
       <div class="progress-text">
-        <span>Прогресс сферы</span>
+        <span id="progressLabel">Прогресс сферы</span>
         <span id="progressPercent">0%</span>
       </div>
       <div class="progress-bar-bg">
@@ -212,23 +233,19 @@
       </div>
     </div>
 
-    <!-- Добавление из шаблонных микро-шагов -->
     <select id="templateSelect" onchange="applyTemplate()">
-      <option value="">💡 Выбрать готовый микро-шаг (5-10 мин)...</option>
+      <option value="" id="templatePlaceholder">💡 Выбрать готовый микро-шаг...</option>
     </select>
 
-    <!-- Ручной ввод -->
     <input type="text" id="taskInput" placeholder="Или введите свою задачу...">
-    <button class="primary-btn" onclick="addTask()">Добавить микро-шаг</button>
+    <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить микро-шаг</button>
 
-    <!-- Фильтры -->
     <div class="filter-box">
-      <button class="filter-btn active" onclick="setFilter(event, 'all')">Все</button>
-      <button class="filter-btn" onclick="setFilter(event, 'active')">В работе</button>
-      <button class="filter-btn" onclick="setFilter(event, 'completed')">Готово</button>
+      <button class="filter-btn active" onclick="setFilter(event, 'all')" id="filterAll">Все</button>
+      <button class="filter-btn" onclick="setFilter(event, 'active')" id="filterActive">В работе</button>
+      <button class="filter-btn" onclick="setFilter(event, 'completed')" id="filterCompleted">Готово</button>
     </div>
 
-    <!-- Список задач -->
     <ul class="task-list" id="taskList"></ul>
   </div>
 
@@ -236,24 +253,84 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const categories = ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'];
+    let currentLang = localStorage.getItem('appLang') || 'ru';
 
-    const templates = {
-      'Работа': ['Очистить рабочий стол от мусора', 'Составить 3 главных приоритета на день', 'Зафиксировать 1 рабочее достижение'],
-      'Семья': ['Написать теплое сообщение близкому', 'Устроить 15 минут общения без телефонов', 'Искренне поблагодарить родных'],
-      'Друзья': ['Отправить другу приятное воспоминание', 'Запланировать встречу на выходные', 'Узнать как дела у старого знакомого'],
-      'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок по интересному хобби', 'Заказать материалы для творчества'],
-      'Отдых': ['Сделать 10 минут полного «цифрового детокса»', 'Побыть в тишине с закрытыми глазами', 'Лечь спать на 30 минут раньше'],
-      'Здоровье': ['Выпить стакан чистой воды', 'Сделать 5-минутную разминку', 'Записаться на плановый осмотр'],
-      'Духовность': ['Записать 3 вещи, за которые вы благодарны', 'Помедитировать 5 минут', 'Сделать 1 бескорыстное доброе дело'],
-      'Саморазвитие': ['Прочитать 5 страниц полезной книги', 'Выписать 1 инсайт за сегодня', 'Поучить 5 новых иностранных слов']
+    const translations = {
+      ru: {
+        appTitle: '📊 Колесо Баланса',
+        tab1: '📊 Колесо',
+        tab2: '📖 Описание',
+        tab3: '✅ Задачи',
+        progressLabel: 'Прогресс сферы',
+        templatePlaceholder: '💡 Выбрать готовый микро-шаг (5-10 мин)...',
+        taskInputPlaceholder: 'Или введите свою задачу...',
+        addBtn: 'Добавить микро-шаг',
+        filterAll: 'Все',
+        filterActive: 'В работе',
+        filterCompleted: 'Готово',
+        langBtn: '🌐 UA',
+        categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
+        descriptions: [
+          { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация, социальная востребованность и высокий уровень мастерства. Перекос создает чувство бессмысленности.' },
+          { name: '2. Семья и Близкие', desc: 'Близкие партнерские или семейные отношения. Зона эмоциональной безопасности, любви и глубокого привязания.' },
+          { name: '3. Друзья и Окружение', desc: 'Качественный социальный круг единомышленников, с которыми можно разделять интересы и получать поддержку.' },
+          { name: '4. Хобби и Творчество', desc: 'Деятельность из компонента «ХОЧУ», а не «НАДО». Пространство свободной игры и творчества, дающее дофаминовый ресурс.' },
+          { name: '5. Отдых и Восстановление', desc: 'Соблюдение психогигиены, переключение от дел и полноценное восстановление нервной системы для профилактики выгорания.' },
+          { name: '6. Здоровье и Тело', desc: 'Физическое самочувствие, сон, рацион питания, регулярные нагрузки и внимание к сигналам тела. База для энергии.' },
+          { name: '7. Духовность и Смысл', desc: 'Четкая экзистенциальная концепция: субъективное ощущение предназначения, осознание ответа на вопрос «зачем я живу».' },
+          { name: '8. Саморазвитие и Рост', desc: 'Изучение нового, расширение кругозора, освоение навыков, путешествия и работа с собственным мышлением.' }
+        ],
+        templates: {
+          'Работа': ['Очистить рабочий стол от мусора', 'Составить 3 главных приоритета на день', 'Зафиксировать 1 рабочее достижение'],
+          'Семья': ['Написать теплое сообщение близкому', 'Устроить 15 минут общения без телефонов', 'Искренне поблагодарить родных'],
+          'Друзья': ['Отправить другу приятное воспоминание', 'Запланировать встречу на выходные', 'Узнать как дела у старого знакомого'],
+          'Хобби': ['Уделить 10 минут увлечению', 'Посмотреть урок по интересному хобби', 'Заказать материалы для творчества'],
+          'Отдых': ['Сделать 10 минут полного «цифрового детокса»', 'Побыть в тишине с закрытыми глазами', 'Лечь спать на 30 минут раньше'],
+          'Здоровье': ['Выпить стакан чистой воды', 'Сделать 5-минутную разминку', 'Записаться на плановый осмотр'],
+          'Духовность': ['Записать 3 вещи, за которые вы благодарны', 'Помедитировать 5 минут', 'Сделать 1 бескорыстное доброе дело'],
+          'Саморазвитие': ['Прочитать 5 страниц полезной книги', 'Выписать 1 инсайт за сегодня', 'Поучить 5 новых иностранных слов']
+        }
+      },
+      ua: {
+        appTitle: '📊 Колесо Балансу',
+        tab1: '📊 Колесо',
+        tab2: '📖 Опис',
+        tab3: '✅ Завдання',
+        progressLabel: 'Прогрес сфери',
+        templatePlaceholder: '💡 Обрати готовий мікро-крок (5-10 хв)...',
+        taskInputPlaceholder: 'Або введіть своє завдання...',
+        addBtn: 'Додати мікро-крок',
+        filterAll: 'Усі',
+        filterActive: 'В роботі',
+        filterCompleted: 'Готово',
+        langBtn: '🌐 RU',
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
+        descriptions: [
+          { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація, соціальна затребуваність та високий рівень майстерності. Перекіс створює відчуття беззмістовності.' },
+          { name: '2. Сім’я та Близькі', desc: 'Близькі партнерські або сімейні стосунки. Зона емоційної безпеки, любові та глибокої прив’язаності.' },
+          { name: '3. Друзі та Оточення', desc: 'Якісне соціальне коло однодумців, з якими можна ділитися інтересами та отримувати підтримку.' },
+          { name: '4. Хобі та Творчість', desc: 'Діяльність із компонента «ХОЧУ», а не «ТРЕБА». Простір вільної гри та творчості, що дає дофаміновий ресурс.' },
+          { name: '5. Відпочинок та Відновлення', desc: 'Дотримання психогігієни, переключення від справ та повноцінне відновлення нервової системи для профілактики вигорання.' },
+          { name: '6. Здоров’я та Тіло', desc: 'Фізичне самопочуття, сон, раціон харчування, регулярні навантаження та увага до сигналів тіла. База для енергії.' },
+          { name: '7. Духовність та Сенс', desc: 'Чітка екзистенційна концепція: суб’єктивне відчуття призначення, усвідомлення відповіді на питання «навіщо я живу».' },
+          { name: '8. Саморозвиток та Зростання', desc: 'Вивчення нового, розширення кругозору, освоєння навичок, подорожі та робота з власним мисленням.' }
+        ],
+        templates: {
+          'Робота': ['Очистити робочий стіл від сміття', 'Скласти 3 головні пріоритети на день', 'Зафіксувати 1 робоче досягнення'],
+          'Сім’я': ['Написати тепле повідомлення близькому', 'Влаштувати 15 хвилин спілкування без телефонів', 'Щиро подякувати рідним'],
+          'Друзі': ['Надіслати другу приємний спогад', 'Запланувати зустріч на вихідні', 'Дізнатися як справи у старого знайомого'],
+          'Хобі': ['Приділити 10 хвилин захопленню', 'Подивитися урок з цікавого хобі', 'Замовити матеріали для творчості'],
+          'Відпочинок': ['Зробити 10 хвилин повного «цифрового детоксу»', 'Побути в тиші з заплющеними очима', 'Лягти спати на 30 хвилин раніше'],
+          'Здоров’я': ['Випити склянку чистої води', 'Зробити 5-хвилинну розминку', 'Записатися на плановий огляд'],
+          'Духовність': ['Записати 3 речі, за які ви вдячні', 'Помедитувати 5 хвилин', 'Зробити 1 безкорисливу добру справу'],
+          'Саморозвиток': ['Прочитати 5 сторінок корисної книги', 'Виписати 1 інсайт за сьогодні', 'Повчити 5 нових іноземних слів']
+        }
+      }
     };
 
-    let scores = JSON.parse(localStorage.getItem('streletskayaFinalScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
-    let tasks = JSON.parse(localStorage.getItem('streletskayaFinalTasks')) || {};
+    let scores = JSON.parse(localStorage.getItem('streletskayaDarkScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
+    let tasks = JSON.parse(localStorage.getItem('streletskayaDarkTasks')) || {};
     let currentFilter = 'all';
-
-    categories.forEach(cat => { if (!tasks[cat]) tasks[cat] = []; });
 
     function openTab(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -262,46 +339,94 @@
       evt.currentTarget.classList.add('active');
     }
 
+    function toggleLanguage() {
+      currentLang = currentLang === 'ru' ? 'ua' : 'ru';
+      localStorage.setItem('appLang', currentLang);
+      applyLanguage();
+    }
+
+    function applyLanguage() {
+      const t = translations[currentLang];
+      document.getElementById('appTitle').innerText = t.appTitle;
+      document.getElementById('tab1').innerText = t.tab1;
+      document.getElementById('tab2').innerText = t.tab2;
+      document.getElementById('tab3').innerText = t.tab3;
+      document.getElementById('progressLabel').innerText = t.progressLabel;
+      document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
+      document.getElementById('addBtn').innerText = t.addBtn;
+      document.getElementById('filterAll').innerText = t.filterAll;
+      document.getElementById('filterActive').innerText = t.filterActive;
+      document.getElementById('filterCompleted').innerText = t.filterCompleted;
+      document.getElementById('langBtn').innerText = t.langBtn;
+
+      // Описание
+      const infoContainer = document.getElementById('infoCardsContainer');
+      infoContainer.innerHTML = '';
+      t.descriptions.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'info-card';
+        card.innerHTML = `<h4>${item.name}</h4><p>${item.desc}</p>`;
+        infoContainer.appendChild(card);
+      });
+
+      // Диаграмма и ползунки
+      wheelChart.data.labels = t.categories;
+      wheelChart.update();
+
+      const slidersContainer = document.getElementById('slidersContainer');
+      slidersContainer.innerHTML = '';
+      t.categories.forEach((cat, index) => {
+        const group = document.createElement('div');
+        group.className = 'slider-group';
+        group.innerHTML = `
+          <label>${cat}</label>
+          <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
+          <span id="val-${index}">${scores[index]}</span>
+        `;
+        slidersContainer.appendChild(group);
+      });
+
+      // Список категорий в задачах
+      const select = document.getElementById('taskCategorySelect');
+      const currentCatVal = select.value;
+      select.innerHTML = '';
+      t.categories.forEach((cat, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx; // Используем индекс как ключи
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+
+      renderTasks();
+    }
+
     // Chart.js
     const ctx = document.getElementById('wheelChart').getContext('2d');
     const wheelChart = new Chart(ctx, {
       type: 'radar',
       data: {
-        labels: categories,
+        labels: [],
         datasets: [{
-          label: 'Уровень сферы',
+          label: 'Уровень',
           data: scores,
-          backgroundColor: 'rgba(36, 129, 204, 0.25)',
-          borderColor: 'rgba(36, 129, 204, 1)',
+          backgroundColor: 'rgba(55, 151, 240, 0.25)',
+          borderColor: 'rgba(55, 151, 240, 1)',
           borderWidth: 2
         }]
       },
       options: {
-        scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
+        scales: {
+          r: {
+            min: 0,
+            max: 10,
+            ticks: { display: false },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+            pointLabels: { color: 'var(--text-color)', font: { size: 11 } }
+          }
+        },
         plugins: { legend: { display: false } }
       }
-    });
-
-    // Инициализация ползунков
-    const slidersContainer = document.getElementById('slidersContainer');
-    categories.forEach((cat, index) => {
-      const group = document.createElement('div');
-      group.className = 'slider-group';
-      group.innerHTML = `
-        <label>${cat}</label>
-        <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
-        <span id="val-${index}">${scores[index]}</span>
-      `;
-      slidersContainer.appendChild(group);
-    });
-
-    // Инициализация выпадающих списков
-    const select = document.getElementById('taskCategorySelect');
-    categories.forEach(cat => {
-      const opt = document.createElement('option');
-      opt.value = cat;
-      opt.textContent = cat;
-      select.appendChild(opt);
     });
 
     function updateScore(index, value) {
@@ -309,14 +434,17 @@
       document.getElementById(`val-${index}`).innerText = value;
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
-      localStorage.setItem('streletskayaFinalScores', JSON.stringify(scores));
+      localStorage.setItem('streletskayaDarkScores', JSON.stringify(scores));
     }
 
     function updateTemplates() {
-      const selectedCat = select.value;
+      const t = translations[currentLang];
+      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
+      const catNameRu = translations.ru.categories[selectIdx];
       const tSelect = document.getElementById('templateSelect');
-      tSelect.innerHTML = '<option value="">💡 Выбрать готовый микро-шаг (5-10 мин)...</option>';
-      (templates[selectedCat] || []).forEach(tText => {
+      tSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
+      
+      (t.templates[catNameRu] || []).forEach(tText => {
         const opt = document.createElement('option');
         opt.value = tText;
         opt.textContent = tText;
@@ -340,20 +468,19 @@
 
     function renderTasks() {
       updateTemplates();
-      const selectedCat = select.value;
+      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
       const listEl = document.getElementById('taskList');
       listEl.innerHTML = '';
       
-      const catTasks = tasks[selectedCat] || [];
+      if (!tasks[selectIdx]) tasks[selectIdx] = [];
+      const catTasks = tasks[selectIdx];
 
-      // Обновление прогресс-бара
       const total = catTasks.length;
       const completedCount = catTasks.filter(t => t.completed).length;
       const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
       document.getElementById('progressPercent').innerText = percent + '%';
       document.getElementById('progressBarFill').style.width = percent + '%';
 
-      // Фильтрация
       const filteredTasks = catTasks.filter(t => {
         if (currentFilter === 'active') return !t.completed;
         if (currentFilter === 'completed') return t.completed;
@@ -366,10 +493,10 @@
         li.className = `task-item ${task.completed ? 'completed' : ''}`;
         li.innerHTML = `
           <label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;">
-            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${selectedCat}', ${realIdx})">
+            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${selectIdx}, ${realIdx})">
             <span>${task.text}</span>
           </label>
-          <button class="delete-btn" onclick="deleteTask('${selectedCat}', ${realIdx})">×</button>
+          <button class="delete-btn" onclick="deleteTask(${selectIdx}, ${realIdx})">×</button>
         `;
         listEl.appendChild(li);
       });
@@ -378,29 +505,30 @@
     function addTask() {
       const input = document.getElementById('taskInput');
       const text = input.value.trim();
-      const selectedCat = select.value;
+      const selectIdx = document.getElementById('taskCategorySelect').value || 0;
       if (!text) return;
 
-      tasks[selectedCat].push({ text, completed: false });
+      if (!tasks[selectIdx]) tasks[selectIdx] = [];
+      tasks[selectIdx].push({ text, completed: false });
       input.value = '';
       document.getElementById('templateSelect').value = '';
-      localStorage.setItem('streletskayaFinalTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskayaDarkTasks', JSON.stringify(tasks));
       renderTasks();
     }
 
-    function toggleTask(cat, idx) {
-      tasks[cat][idx].completed = !tasks[cat][idx].completed;
-      localStorage.setItem('streletskayaFinalTasks', JSON.stringify(tasks));
+    function toggleTask(catIdx, idx) {
+      tasks[catIdx][idx].completed = !tasks[catIdx][idx].completed;
+      localStorage.setItem('streletskayaDarkTasks', JSON.stringify(tasks));
       renderTasks();
     }
 
-    function deleteTask(cat, idx) {
-      tasks[cat].splice(idx, 1);
-      localStorage.setItem('streletskayaFinalTasks', JSON.stringify(tasks));
+    function deleteTask(catIdx, idx) {
+      tasks[catIdx].splice(idx, 1);
+      localStorage.setItem('streletskayaDarkTasks', JSON.stringify(tasks));
       renderTasks();
     }
 
-    renderTasks();
+    applyLanguage();
   </script>
 </body>
 </html>
