@@ -186,13 +186,14 @@
 
     .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
     .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
-    .slider-group label { font-size: 13px; flex: 1; font-weight: 500; }
+    
+    /* Кликабельная лейбла сферы для вызова справки */
+    .slider-group label {
+      font-size: 13px; flex: 1; font-weight: 500; cursor: pointer;
+      color: var(--accent-color); text-decoration: underline dotted;
+    }
     .slider-group input { width: 40%; accent-color: var(--accent-color); }
     .slider-group span { width: 25px; text-align: right; font-weight: bold; color: var(--accent-color); }
-
-    .info-card { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); }
-    .info-card h4 { margin: 0 0 6px 0; color: var(--accent-color); font-size: 14px; }
-    .info-card p { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-color); }
 
     .task-add-box { background: var(--card-bg); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); }
     .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -247,7 +248,7 @@
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
-    /* Исправленный Overlay с абсолютным позиционированием по центру экрана */
+    /* Универсальные модальные окна */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -263,7 +264,7 @@
       box-sizing: border-box; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .modal-card h3 { color: var(--accent-color); margin-top: 0; font-size: 18px; }
-    .modal-card p { font-size: 13px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; }
+    .modal-card p { font-size: 13px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; text-align: left; }
     .modal-steps { font-size: 11px; color: var(--subtext-color); margin-bottom: 12px; font-weight: bold; }
     .modal-buttons { display: flex; gap: 8px; }
   </style>
@@ -275,7 +276,7 @@
     <div class="modal-card">
       <div class="modal-steps" id="onboardingStepIndicator">Шаг 1 из 3</div>
       <h3 id="onboardingTitle">Заголовок</h3>
-      <p id="onboardingText">Текст объяснения...</p>
+      <p id="onboardingText" style="text-align: center;">Текст объяснения...</p>
       <div class="modal-buttons">
         <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="onboardingSkipBtn" onclick="closeOnboarding()">Пропустить</button>
         <button class="primary-btn" style="flex:1; margin-bottom:0;" id="onboardingNextBtn" onclick="nextOnboardingStep()">Далее</button>
@@ -283,11 +284,20 @@
     </div>
   </div>
 
-  <!-- Модальное окно удаления задачи (выровнено строго по центру экрана) -->
+  <!-- Модальное окно справки по конкретной сфере жизни -->
+  <div class="modal-overlay" id="sphereInfoModal">
+    <div class="modal-card">
+      <h3 id="sphereModalTitle">Сфера</h3>
+      <p id="sphereModalDesc">Описание...</p>
+      <button class="primary-btn" onclick="closeSphereModal()">Понятно</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно подтверждения удаления задачи -->
   <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal-card">
       <h3 id="delModalTitle" style="color: var(--danger-color);">Удаление задачи</h3>
-      <p id="delModalText">Вы уверены, что хотите удалить эту задачу?</p>
+      <p id="delModalText" style="text-align: center;">Вы уверены, что хотите удалить эту задачу?</p>
       <div class="modal-buttons">
         <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="delCancelBtn" onclick="closeDeleteModal()">Отмена</button>
         <button class="primary-btn danger-btn" style="flex:1; margin-bottom:0;" id="delConfirmBtn" onclick="confirmDeleteTask()">Удалить</button>
@@ -314,11 +324,11 @@
     </div>
   </div>
 
-  <!-- Навигация без вкладки Архив -->
+  <!-- Навигация: Задачи строго посередине, Календарь справа -->
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
-    <button class="tab-btn" onclick="openTab(event, 'infoTab')" id="tab2">📖 Описание</button>
-    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab3">✅ Задачи</button>
+    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab2">✅ Задачи</button>
+    <button class="tab-btn" onclick="openTab(event, 'calendarTab')" id="tab3">📅 Календарь</button>
   </div>
 
   <!-- Колесо -->
@@ -329,21 +339,8 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
-  <!-- Описание -->
-  <div id="infoTab" class="tab-content">
-    <div style="margin-bottom: 12px;">
-      <button class="primary-btn" onclick="showOnboarding(true)" id="guideBtn">📖 Открыть путеводитель (КПТ)</button>
-    </div>
-    <div id="infoCardsContainer"></div>
-  </div>
-
-  <!-- Вкладка Задач (Архив удален, добавлено 2 подвкладки) -->
+  <!-- Вкладка Задач (посередине) -->
   <div id="tasksTab" class="tab-content">
-    <div class="sub-tabs">
-      <button class="sub-tab-btn active" onclick="switchTaskSubTab(event, 'activeTasks')" id="subTabActive">📋 Задачи</button>
-      <button class="sub-tab-btn" onclick="switchTaskSubTab(event, 'calendarTasks')" id="subTabCalendar">📅 Календарь</button>
-    </div>
-
     <div class="task-add-box" id="taskAddBox">
       <div class="input-row">
         <select id="taskCategorySelect" style="flex: 1;" onchange="updateTemplates()"></select>
@@ -359,39 +356,36 @@
       <button class="primary-btn" onclick="addTask()" id="addBtn">Добавить задачу</button>
     </div>
 
-    <!-- Вкладка: Активные задачи -->
     <div id="activeTasksSection">
       <ul class="task-list" id="activeTaskList"></ul>
     </div>
+  </div>
 
-    <!-- Вкладка: Календарь с расширенными фильтрами снизу -->
-    <div id="calendarTasksSection" style="display: none;">
-      <div class="calendar-card">
-        <div class="calendar-header">
-          <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(-1)">&lt;</button>
-          <span id="calMonthYear">Октябрь 2026</span>
-          <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(1)">&gt;</button>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
+  <!-- Вкладка Календарь (справа) с историей снизу -->
+  <div id="calendarTab" class="tab-content">
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(-1)">&lt;</button>
+        <span id="calMonthYear">Октябрь 2026</span>
+        <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(1)">&gt;</button>
       </div>
-      
-      <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color);" id="calSelectedDateTitle">Задачи на выбранную дату:</div>
-      <ul class="task-list" id="calendarTaskList" style="margin-bottom: 15px;"></ul>
-
-      <!-- Выпадающий список для отображения истории за периоды снизу -->
-      <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-        <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--subtext-color);" id="calHistoryTitle">История выполненных задач:</div>
-        <select id="historyFilterSelect" onchange="renderCalendarHistory(this.value)" style="width: 100%; margin-bottom: 10px;">
-          <option value="7days" id="histOpt7Days">🗓 За последние 7 дней</option>
-          <option value="month" id="histOptMonth">📊 За последний месяц</option>
-          <option value="3months" id="histOpt3Months">⏳ За последние 3 месяца</option>
-          <option value="6months" id="histOpt6Months">📈 За полгода</option>
-          <option value="year" id="histOptYear">🏆 За год</option>
-        </select>
-        <ul class="task-list" id="historyTaskList"></ul>
-      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
     </div>
+    
+    <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color);" id="calSelectedDateTitle">Задачи на выбранную дату:</div>
+    <ul class="task-list" id="calendarTaskList" style="margin-bottom: 15px;"></ul>
 
+    <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+      <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--subtext-color);" id="calHistoryTitle">История выполненных задач:</div>
+      <select id="historyFilterSelect" onchange="renderCalendarHistory(this.value)" style="width: 100%; margin-bottom: 10px;">
+        <option value="7days" id="histOpt7Days">🗓 За последние 7 дней</option>
+        <option value="month" id="histOptMonth">📊 За последний месяц</option>
+        <option value="3months" id="histOpt3Months">⏳ За последние 3 месяца</option>
+        <option value="6months" id="histOpt6Months">📈 За полгода</option>
+        <option value="year" id="histOptYear">🏆 За год</option>
+      </select>
+      <ul class="task-list" id="historyTaskList"></ul>
+    </div>
   </div>
 
   <script>
@@ -401,8 +395,7 @@
     const translations = {
       ru: {
         appTitleMain: 'Колесо', appTitleSub: 'Баланса',
-        tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
-        subTabActive: '📋 Задачи', subTabCalendar: '📅 Календарь',
+        tab1: '📊 Колесо', tab2: '✅ Задачи', tab3: '📅 Календарь',
         templatePlaceholder: '💡 Или выберите из готовых идей...',
         taskInputPlaceholder: 'Введите название задачи...',
         addBtn: 'Добавить задачу',
@@ -412,7 +405,6 @@
         calSelectedTitle: 'Задачи на выбранную дату:',
         calHistoryTitle: 'История выполненных задач:',
         checkTitle: 'Отметить выполненной',
-        guideBtn: '📖 Открыть путеводитель (КПТ)',
         langBtn: 'UA',
         delModalTitle: 'Удаление задачи',
         delModalText: 'Вы уверены, что хотите удалить эту задачу?',
@@ -427,7 +419,7 @@
         onboarding: [
           { title: '🧠 Зачем нужно Колесо Баланса?', text: 'С точки зрения КПТ, наш мозг часто зацикливается на одной сфере, упуская другие. Оценка сфер помогает вернуть объективный взгляд на жизнь.' },
           { title: '🎯 Синдром "всё или ничего"', text: 'Метод микро-шагов (по 5-10 минут) снижает тревогу и активирует дофаминовую систему без перегрузки.' },
-          { title: '📅 Календарь и История', text: 'Фиксация маленьких шагов доказывает вам, что вы движетесь вперед. Начнем!' }
+          { title: '📅 Календарь и История', text: 'Фиксация маленьких шагов доказывает вам, что вы движетесь вперед. Нажмите на название любой сферы на вкладке "Колесо", чтобы узнать ее подробное КПТ-описание. Начнем!' }
         ],
         descriptions: [
           { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
@@ -452,8 +444,7 @@
       },
       ua: {
         appTitleMain: 'Колесо', appTitleSub: 'Балансу',
-        tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
-        subTabActive: '📋 Завдання', subTabCalendar: '📅 Календар',
+        tab1: '📊 Колесо', tab2: '✅ Завдання', tab3: '📅 Календар',
         templatePlaceholder: '💡 Або оберіть з готових ідей...',
         taskInputPlaceholder: 'Введіть назву завдання...',
         addBtn: 'Додати завдання',
@@ -463,7 +454,6 @@
         calSelectedTitle: 'Завдання на обрану дату:',
         calHistoryTitle: 'Історія виконаних завдань:',
         checkTitle: 'Позначити виконаним',
-        guideBtn: '📖 Відкрити путівник (КПТ)',
         langBtn: 'RU',
         delModalTitle: 'Видалення завдання',
         delModalText: 'Ви впевнені, що хочете видалити це завдання?',
@@ -474,11 +464,11 @@
         histOpt3Months: '⏳ За останні 3 місяці',
         histOpt6Months: '📈 За пів року',
         histOptYear: '🏆 За рік',
-        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморазвиток'],
         onboarding: [
           { title: '🧠 Навіщо потрібне Колесо Балансу?', text: 'З погляду КПТ, наш мозг часто зациклюється на одній сфері. Оцінка сфер допомагає повернути об’єктивний погляд.' },
           { title: '🎯 Синдром "все або нічого"', text: 'Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.' },
-          { title: '📅 Календар та Історія', text: 'Фіксація маленьких кроків доводить вам, що ви рухаєтеся вперед. Почнімо!' }
+          { title: '📅 Календар та Історія', text: 'Фіксація маленьких кроків доводить вам, що ви рухаєтеся вперед. Натисніть на назву будь-якої сфери на вкладці "Колесо", щоб дізнатися її опис. Почнімо!' }
         ],
         descriptions: [
           { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
@@ -512,7 +502,6 @@
     let taskList = Array.from(taskMap.values());
     localStorage.setItem('streletskayaThemeTasksV3', JSON.stringify(taskList));
 
-    let activeSubTab = 'activeTasks';
     let currentCalDate = new Date();
     let selectedCalDayStr = new Date().toISOString().split('T')[0];
     let historyFilterMode = '7days';
@@ -553,6 +542,21 @@
       document.getElementById('onboardingModal').classList.remove('show');
     };
 
+    // Открытие модального окна с описанием конкретной сферы
+    window.openSphereInfo = function(index) {
+      const t = translations[currentLang];
+      const sphereData = t.descriptions[index];
+      if (sphereData) {
+        document.getElementById('sphereModalTitle').innerText = sphereData.name;
+        document.getElementById('sphereModalDesc').innerText = sphereData.desc;
+        document.getElementById('sphereInfoModal').classList.add('show');
+      }
+    };
+
+    window.closeSphereModal = function() {
+      document.getElementById('sphereInfoModal').classList.remove('show');
+    };
+
     window.promptDeleteTask = function(taskId) {
       taskToDeleteId = taskId;
       document.getElementById('deleteConfirmModal').classList.add('show');
@@ -577,16 +581,6 @@
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       evt.currentTarget.classList.add('active');
-    };
-
-    window.switchTaskSubTab = function(evt, subTabId) {
-      activeSubTab = subTabId;
-      document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
-      evt.currentTarget.classList.add('active');
-      document.getElementById('taskAddBox').style.display = subTabId === 'calendarTasks' ? 'none' : 'block';
-      document.getElementById('activeTasksSection').style.display = subTabId === 'activeTasks' ? 'block' : 'none';
-      document.getElementById('calendarTasksSection').style.display = subTabId === 'calendarTasks' ? 'block' : 'none';
-      renderTasksTab();
     };
 
     window.toggleTheme = function() {
@@ -623,12 +617,9 @@
       document.getElementById('tab1').innerText = t.tab1;
       document.getElementById('tab2').innerText = t.tab2;
       document.getElementById('tab3').innerText = t.tab3;
-      document.getElementById('subTabActive').innerText = t.subTabActive;
-      document.getElementById('subTabCalendar').innerText = t.subTabCalendar;
       document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
       document.getElementById('addBtn').innerText = t.addBtn;
       document.getElementById('langBtn').innerText = t.langBtn;
-      document.getElementById('guideBtn').innerText = t.guideBtn;
       document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
       document.getElementById('calHistoryTitle').innerText = t.calHistoryTitle;
 
@@ -642,15 +633,6 @@
       document.getElementById('delModalText').innerText = t.delModalText;
       document.getElementById('delCancelBtn').innerText = t.delCancelBtn;
       document.getElementById('delConfirmBtn').innerText = t.delConfirmBtn;
-
-      const infoContainer = document.getElementById('infoCardsContainer');
-      infoContainer.innerHTML = '';
-      t.descriptions.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'info-card';
-        card.innerHTML = `<h4>${item.name}</h4><p>${item.desc}</p>`;
-        infoContainer.appendChild(card);
-      });
 
       wheelChart.data.labels = t.categories;
       wheelChart.update();
@@ -700,7 +682,7 @@
         const group = document.createElement('div');
         group.className = 'slider-group';
         group.innerHTML = `
-          <label>${cat}</label>
+          <label onclick="openSphereInfo(${index})" title="Нажмите, чтобы прочитать описание сферы">${cat}</label>
           <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
           <span id="val-${index}">${scores[index]}</span>
         `;
@@ -782,8 +764,8 @@
 
     function renderTasksTab() {
       updateTemplates();
-      if (activeSubTab === 'activeTasks') renderActiveTasks();
-      else if (activeSubTab === 'calendarTasks') renderCalendarView();
+      renderActiveTasks();
+      renderCalendarView();
     }
 
     function renderActiveTasks() {
@@ -853,7 +835,6 @@
         grid.appendChild(div);
       }
 
-      // Задачи на выбранный день
       const dayTasks = taskList.filter(t => t.createdAt === selectedCalDayStr || t.completedAt === selectedCalDayStr);
       const listEl = document.getElementById('calendarTaskList');
       listEl.innerHTML = '';
@@ -874,7 +855,6 @@
         });
       }
 
-      // Рендерим нижний блок истории по выбранному периоду
       renderCalendarHistory(historyFilterMode);
     }
 
