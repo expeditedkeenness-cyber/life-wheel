@@ -36,20 +36,20 @@
     };
 
     onAuthStateChanged(auth, async (user) => {
-      const authBtn = document.getElementById('authBtn');
+      const authBtn = document.getElementById('authBtnText');
       const userAvatar = document.getElementById('userAvatar');
       
       if (user) {
-        authBtn.innerText = `Выйти (${user.displayName.split(' ')[0]})`;
-        authBtn.onclick = window.logoutFromGoogle;
+        authBtn.innerText = user.displayName.split(' ')[0];
+        document.getElementById('authBox').onclick = window.logoutFromGoogle;
         if(user.photoURL) {
           userAvatar.src = user.photoURL;
           userAvatar.style.display = 'block';
         }
         await loadUserData(user.uid);
       } else {
-        authBtn.innerText = '🌐 Войти';
-        authBtn.onclick = window.loginWithGoogle;
+        authBtn.innerText = 'Войти';
+        document.getElementById('authBox').onclick = window.loginWithGoogle;
         userAvatar.style.display = 'none';
       }
     });
@@ -113,10 +113,10 @@
       --bg-color: #f4f5f7;
       --text-color: #121212;
       --card-bg: #ffffff;
-      --card-sub-bg: #f0f0f0;
+      --card-sub-bg: #eaeaea;
       --accent-color: #2481cc;
       --accent-text: #ffffff;
-      --border-color: rgba(0, 0, 0, 0.1);
+      --border-color: rgba(0, 0, 0, 0.08);
       --subtext-color: #666666;
       --success-color: #2e7d32;
     }
@@ -130,7 +130,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Премиальный эффект блюра при старте, смене темы и языка */
+    /* Премиальный размытый фон при переходах */
     body.is-blur {
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -148,19 +148,51 @@
       transition: backdrop-filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease, background-color 0.5s ease, color 0.5s ease;
     }
     
-    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .header-controls { display: flex; gap: 6px; align-items: center; }
-    .btn-toggle {
-      background: var(--card-bg); color: var(--text-color);
-      border: 1px solid var(--border-color); padding: 6px 10px;
-      border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer;
-      transition: background 0.3s, color 0.3s;
+    /* Улучшенная верхняя панель */
+    .header-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; padding: 6px 4px;
     }
-    .user-avatar { width: 24px; height: 24px; border-radius: 50%; display: none; }
+    .app-brand {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .app-logo {
+      width: 30px; height: 30px; background: var(--accent-color);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; box-shadow: 0 4px 12px rgba(55, 151, 240, 0.3);
+    }
+    .app-title-text {
+      font-weight: 700; font-size: 15px; letter-spacing: -0.3px; line-height: 1.1;
+    }
+    .app-subtitle-text {
+      font-weight: 500; font-size: 11px; color: var(--subtext-color);
+    }
 
-    .nav-tabs { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
-    .tab-btn { flex: 1; padding: 10px 2px; border: none; background: none; font-size: 13px; font-weight: bold; color: var(--subtext-color); cursor: pointer; border-bottom: 3px solid transparent; text-align: center; transition: color 0.3s; }
-    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+    .header-controls { display: flex; gap: 6px; align-items: center; }
+    
+    /* Компактная премиальная кнопка профиля */
+    .auth-box {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      padding: 4px 10px 4px 6px; border-radius: 20px; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .auth-box:active { transform: scale(0.96); }
+    .user-avatar { width: 22px; height: 22px; border-radius: 50%; display: none; object-fit: cover; }
+    .auth-text { font-size: 11px; font-weight: 600; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .btn-icon {
+      background: var(--card-bg); color: var(--text-color);
+      border: 1px solid var(--border-color); width: 32px; height: 32px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .btn-icon:active { transform: scale(0.92); }
+
+    /* Навигационные табы */
+    .nav-tabs { display: flex; gap: 6px; background: var(--card-bg); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .tab-btn { flex: 1; padding: 9px 4px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--subtext-color); cursor: pointer; border-radius: 8px; text-align: center; transition: all 0.2s ease; }
+    .tab-btn.active { background: var(--accent-color); color: var(--accent-text); box-shadow: 0 2px 8px rgba(55, 151, 240, 0.3); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
@@ -249,7 +281,7 @@
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
 
-    /* Модальное окно Путеводителя (Onboarding) */
+    /* Модальное окно Путеводителя */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -272,26 +304,36 @@
 </head>
 <body>
 
-  <!-- Путеводитель / Онбординг (КПТ-гид) -->
+  <!-- Путеводитель / Онбординг -->
   <div class="modal-overlay" id="onboardingModal">
     <div class="modal-card">
       <div class="modal-steps" id="onboardingStepIndicator">Шаг 1 из 3</div>
       <h3 id="onboardingTitle">Заголовок</h3>
       <p id="onboardingText">Текст объяснения...</p>
       <div class="modal-buttons">
-        <button class="btn-toggle" style="flex:1; padding: 10px;" id="onboardingSkipBtn" onclick="closeOnboarding()">Пропустить</button>
+        <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="onboardingSkipBtn" onclick="closeOnboarding()">Пропустить</button>
         <button class="primary-btn" style="flex:1; margin-bottom:0;" id="onboardingNextBtn" onclick="nextOnboardingStep()">Далее</button>
       </div>
     </div>
   </div>
 
+  <!-- Улучшенная премиальная верхняя панель -->
   <div class="header-bar">
-    <span style="font-weight: bold; font-size: 14px;" id="appTitle">📊 Колесо Баланса</span>
+    <div class="app-brand">
+      <div class="app-logo">🎯</div>
+      <div>
+        <div class="app-title-text" id="appTitleMain">Колесо</div>
+        <div class="app-subtitle-text" id="appTitleSub">Баланса</div>
+      </div>
+    </div>
+
     <div class="header-controls">
-      <img id="userAvatar" class="user-avatar" alt="User">
-      <button class="btn-toggle" id="authBtn">🌐 Войти</button>
-      <button class="btn-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
-      <button class="btn-toggle" onclick="toggleLanguage()" id="langBtn">🌐 UA</button>
+      <div class="auth-box" id="authBox">
+        <img id="userAvatar" class="user-avatar" alt="User">
+        <span class="auth-text" id="authBtnText">Войти</span>
+      </div>
+      <button class="btn-icon" onclick="toggleTheme()" id="themeBtn" title="Сменить тему">🌙</button>
+      <button class="btn-icon" onclick="toggleLanguage()" id="langBtn" title="Сменить язык" style="font-weight: bold; font-size: 11px;">UA</button>
     </div>
   </div>
 
@@ -352,9 +394,9 @@
     <div id="calendarTasksSection" style="display: none;">
       <div class="calendar-card">
         <div class="calendar-header">
-          <button class="btn-toggle" onclick="changeMonth(-1)">&lt;</button>
+          <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(-1)">&lt;</button>
           <span id="calMonthYear">Октябрь 2026</span>
-          <button class="btn-toggle" onclick="changeMonth(1)">&gt;</button>
+          <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(1)">&gt;</button>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
       </div>
@@ -386,7 +428,8 @@
 
     const translations = {
       ru: {
-        appTitle: '📊 Колесо Баланса',
+        appTitleMain: 'Колесо',
+        appTitleSub: 'Баланса',
         tab1: '📊 Колесо', tab2: '📖 Описание', tab3: '✅ Задачи',
         subTabActive: '📋 Задачи', subTabCalendar: '📅 Календарь', subTabArchive: '📂 Архив',
         templatePlaceholder: '💡 Или выберите из готовых идей...',
@@ -399,7 +442,7 @@
         calSelectedTitle: 'Задачи на выбранную дату:',
         checkTitle: 'Отметить выполненной',
         guideBtn: '📖 Открыть путеводитель (КПТ)',
-        langBtn: '🌐 UA',
+        langBtn: 'UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
         onboarding: [
           {
@@ -437,7 +480,8 @@
         }
       },
       ua: {
-        appTitle: '📊 Колесо Балансу',
+        appTitleMain: 'Колесо',
+        appTitleSub: 'Балансу',
         tab1: '📊 Колесо', tab2: '📖 Опис', tab3: '✅ Завдання',
         subTabActive: '📋 Завдання', subTabCalendar: '📅 Календар', subTabArchive: '📂 Архів',
         templatePlaceholder: '💡 Або оберіть з готових ідей...',
@@ -450,7 +494,7 @@
         calSelectedTitle: 'Завдання на обрану дату:',
         checkTitle: 'Позначити виконаним',
         guideBtn: '📖 Відкрити путівник (КПТ)',
-        langBtn: '🌐 RU',
+        langBtn: 'RU',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
         onboarding: [
           {
@@ -501,7 +545,6 @@
 
     document.getElementById('taskDueDate').value = selectedCalDayStr;
 
-    // Плавный переход с прелестным блюром
     function applySmoothTransition(updateCallback) {
       document.body.classList.add('is-blur');
       setTimeout(() => {
@@ -512,7 +555,6 @@
       }, 250);
     }
 
-    // Логика путеводителя
     function checkFirstVisit() {
       const hasVisited = localStorage.getItem('streletskayaVisited');
       if (!hasVisited) {
@@ -603,7 +645,8 @@
 
     function applyLanguage() {
       const t = translations[currentLang];
-      document.getElementById('appTitle').innerText = t.appTitle;
+      document.getElementById('appTitleMain').innerText = t.appTitleMain;
+      document.getElementById('appTitleSub').innerText = t.appTitleSub;
       document.getElementById('tab1').innerText = t.tab1;
       document.getElementById('tab2').innerText = t.tab2;
       document.getElementById('tab3').innerText = t.tab3;
@@ -939,7 +982,6 @@
       });
     }
 
-    // Инициализация при старте с мягким блюром
     applyTheme();
     applyLanguage();
     checkFirstVisit();
