@@ -75,7 +75,7 @@
           updatedAt: new Date()
         });
       } catch (e) {
-        console.error("Ошибка сохранения в облако: ", e);
+        console.error("Помилка збереження у хмару: ", e);
       }
     };
 
@@ -95,7 +95,7 @@
           }
         }
       } catch (e) {
-        console.error("Ошибка загрузки из облака: ", e);
+        console.error("Помилка завантаження з хмари: ", e);
       }
     }
   </script>
@@ -222,4 +222,711 @@
     .task-list { list-style: none; padding: 0; margin: 0; }
     .task-item {
       display: flex; align-items: center; gap: 8px;
-      background: var(--card-bg); padding: 10px 
+      background: var(--card-bg); padding: 10px 12px; margin-bottom: 8px;
+      border-radius: 10px; font-size: 13px; border: 1px solid var(--border-color);
+    }
+    .check-btn {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--subtext-color); background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; color: transparent; font-size: 12px;
+    }
+    .task-item.completed .check-btn { background: var(--success-color); border-color: var(--success-color); color: #fff; }
+    .task-item.completed .task-text { text-decoration: line-through; color: var(--subtext-color); }
+    .task-cat-badge {
+      font-size: 10px; padding: 3px 7px; border-radius: 6px;
+      background: var(--card-sub-bg); color: var(--accent-color); font-weight: 600; flex-shrink: 0; border: 1px solid var(--border-color);
+    }
+    .task-text { flex: 1; min-width: 0; word-break: break-word; }
+    .delete-btn { background: none; border: none; color: #ff5252; cursor: pointer; font-weight: bold; font-size: 16px; padding: 0 4px; flex-shrink: 0; }
+
+    .calendar-card { background: var(--card-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 13px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; }
+    .cal-day-head { font-weight: bold; color: var(--subtext-color); padding: 4px 0; }
+    .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; }
+    .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
+    .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; padding: 16px; box-sizing: border-box;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 16px; width: 100%; max-width: 320px; padding: 20px;
+      box-sizing: border-box; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .modal-card h3 { color: var(--accent-color); margin-top: 0; font-size: 18px; }
+    .modal-card p { font-size: 13px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; text-align: left; }
+    .modal-buttons { display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Вітальне вікно -->
+  <div class="modal-overlay" id="welcomeModal">
+    <div class="modal-card">
+      <h3 style="text-align: center;">Вітаю! / Welcome!</h3>
+      <p style="text-align: center; font-size: 12px; color: var(--subtext-color);">Оберіть мову / Choose language</p>
+      
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button type="button" class="primary-btn" id="langUaBtn" onclick="setInitialLang('ua')" style="background: var(--accent-color); color: #fff; border: none;">🇺🇦 Українська</button>
+        <button type="button" class="primary-btn" id="langEnBtn" onclick="setInitialLang('en')" style="background: var(--card-sub-bg); color: var(--text-color); border: 1px solid var(--border-color);">🇬🇧 English</button>
+      </div>
+
+      <p id="welcomePromptText" style="text-align: center; font-size: 12px; margin-bottom: 6px;">Введіть ваше ім'я (для відображення в шапці):</p>
+      <input type="text" id="welcomeNameInput" placeholder="Ваше ім'я..." style="width: 100%; margin-bottom: 15px; text-align: center;">
+      
+      <button class="primary-btn" onclick="saveWelcomeSettings()" id="welcomeSubmitBtn">Продовжити</button>
+    </div>
+  </div>
+
+  <!-- Окно довідки -->
+  <div class="modal-overlay" id="sphereInfoModal">
+    <div class="modal-card">
+      <h3 id="sphereModalTitle">Сфера</h3>
+      <p id="sphereModalDesc">Опис...</p>
+      <button class="primary-btn" onclick="closeSphereModal()" id="sphereCloseBtn">Зрозуміло</button>
+    </div>
+  </div>
+
+  <!-- Вікно видалення завдання -->
+  <div class="modal-overlay" id="deleteConfirmModal">
+    <div class="modal-card">
+      <h3 id="delModalTitle" style="color: var(--danger-color);">Видалення завдання</h3>
+      <p id="delModalText" style="text-align: center;">Ви впевнені, що хочете видалити це завдання?</p>
+      <div class="modal-buttons">
+        <button class="btn-icon" style="width:auto; flex:1; border-radius:8px; height:auto; padding: 10px;" id="delCancelBtn" onclick="closeDeleteModal()">Скасувати</button>
+        <button class="primary-btn danger-btn" style="flex:1; margin-bottom:0;" id="delConfirmBtn" onclick="confirmDeleteTask()">Видалити</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-bar">
+    <div class="app-brand">
+      <div class="app-logo">✨</div>
+      <div>
+        <div class="app-title-text" id="appTitleMain">Колесо</div>
+        <div class="app-subtitle-text" id="appTitleSub">Балансу</div>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="auth-box" id="authBox">
+        <img id="userAvatar" class="user-avatar" alt="User">
+        <span class="auth-text" id="authBtnText">Увійти</span>
+      </div>
+      <button class="btn-icon" onclick="toggleTheme()" id="themeBtn" title="Змінити тему">🌙</button>
+      <button class="btn-icon" onclick="toggleLanguage()" id="langBtn" title="Змінити мову" style="font-weight: bold; font-size: 11px;">EN</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')" id="tab1">📊 Колесо</button>
+    <button class="tab-btn" onclick="openTab(event, 'tasksTab')" id="tab2">📝 Завдання</button>
+    <button class="tab-btn" onclick="openTab(event, 'calendarTab')" id="tab3">📅 Календар</button>
+  </div>
+
+  <div id="wheelTab" class="tab-content active">
+    <div class="chart-container">
+      <canvas id="wheelChart"></canvas>
+    </div>
+    <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
+  </div>
+
+  <div id="tasksTab" class="tab-content">
+    <div class="task-add-box" id="taskAddBox">
+      <div class="input-row">
+        <select id="taskCategorySelect" style="flex: 1;" onchange="updateTemplates()"></select>
+        <input type="date" id="taskDueDate">
+      </div>
+
+      <input type="text" id="taskInput" placeholder="Введіть назву завдання..." style="width: 100%; margin-bottom: 8px;">
+      
+      <select id="templateSelect" onchange="applyTemplate()" style="width: 100%; margin-bottom: 8px;">
+        <option value="" id="templatePlaceholder">💡 Або оберіть з готових ідей...</option>
+      </select>
+
+      <button class="primary-btn" onclick="addTask()" id="addBtn">Додати завдання</button>
+    </div>
+
+    <div id="activeTasksSection">
+      <ul class="task-list" id="activeTaskList"></ul>
+    </div>
+  </div>
+
+  <div id="calendarTab" class="tab-content">
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(-1)">&lt;</button>
+        <span id="calMonthYear">Жовтень 2026</span>
+        <button class="btn-icon" style="width:28px; height:28px;" onclick="changeMonth(1)">&gt;</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    
+    <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px; color: var(--accent-color);" id="calSelectedDateTitle">Завдання на обрану дату:</div>
+    <ul class="task-list" id="calendarTaskList" style="margin-bottom: 15px;"></ul>
+
+    <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+      <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px; color: var(--subtext-color);" id="calHistoryTitle">Історія виконаних завдань:</div>
+      <select id="historyFilterSelect" onchange="renderCalendarHistory(this.value)" style="width: 100%; margin-bottom: 10px;">
+        <option value="7days" id="histOpt7Days">🗓 За останні 7 днів</option>
+        <option value="month" id="histOptMonth">📊 За останній місяць</option>
+        <option value="3months" id="histOpt3Months">⏳ За останні 3 місяці</option>
+        <option value="6months" id="histOpt6Months">📈 За пів року</option>
+        <option value="year" id="histOptYear">🏆 За рік</option>
+      </select>
+      <ul class="task-list" id="historyTaskList"></ul>
+    </div>
+  </div>
+
+  <script>
+    let currentLang = localStorage.getItem('appLang') || 'ua';
+    let currentTheme = localStorage.getItem('appTheme') || 'dark';
+
+    const translations = {
+      ua: {
+        appTitleMain: 'Колесо', appTitleSub: 'Балансу',
+        tab1: '📊 Колесо', tab2: '📝 Завдання', tab3: '📅 Календар',
+        templatePlaceholder: '💡 Або оберіть з готових ідей...',
+        taskInputPlaceholder: 'Введіть назву завдання...',
+        addBtn: 'Додати завдання',
+        emptyTasks: 'Список завдань порожній 👍',
+        emptyCalendar: 'Немає завдань на цю дату',
+        emptyHistory: 'За цей період немає виконаних завдань',
+        calSelectedTitle: 'Завдання на обрану дату:',
+        calHistoryTitle: 'Історія виконаних завдань:',
+        checkTitle: 'Позначити виконаним',
+        langBtn: 'EN',
+        loginText: 'Увійти',
+        delModalTitle: 'Видалення завдання',
+        delModalText: 'Ви впевнені, що хочете видалити це завдання?',
+        delCancelBtn: 'Скасувати',
+        delConfirmBtn: 'Видалити',
+        sphereCloseBtn: 'Зрозуміло',
+        welcomePrompt: "Введіть ваше ім'я (для відображення в шапці):",
+        welcomeBtn: 'Продовжити',
+        histOpt7Days: '🗓 За останні 7 днів',
+        histOptMonth: '📊 За останній місяць',
+        histOpt3Months: '⏳ За останні 3 місяці',
+        histOpt6Months: '📈 За пів року',
+        histOptYear: '🏆 За рік',
+        categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
+        descriptions: [
+          { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
+          { name: '2. Сім’я та Близькі', desc: 'Зона емоційної безпеки, любові та глибокої прив’язаності.' },
+          { name: '3. Друзі та Оточення', desc: 'Соціальне коло однодумців та взаємна підтримка.' },
+          { name: '4. Хобі та Творчість', desc: 'Діяльність із компонента «ХОЧУ», що дає дофаміновий ресурс.' },
+          { name: '5. Відпочинок та Відновлення', desc: 'Психогігієна та профілактика емоційного вигорання.' },
+          { name: '6. Здоров’я та Тіло', desc: 'Сон, харчування, спорт та увага до сигналів тіла.' },
+          { name: '7. Духовність та Сенс', desc: 'Відчуття призначення та відповіді на екзистенційні питання.' },
+          { name: '8. Саморозвиток та Зростання', desc: 'Вивчення нового, розширення кругозору та робота з мисленням.' }
+        ],
+        templates: {
+          'Робота': ['Очистити робочий стіл', 'Скласти 3 пріоритети', 'Зафіксувати досягнення'],
+          'Сім’я': ['Написати близькому', 'Спілкування без телефонів', 'Подякувати рідним'],
+          'Друзі': ['Надіслати спогад другу', 'Запланувати зустріч', 'Дізнатися справи'],
+          'Хобі': ['Приділити 10 хв хобі', 'Подивитися урок', 'Замовити матеріали'],
+          'Відпочинок': ['Цифровий детокс 10 хв', 'Побути в тиші', 'Лягти раніше на 30 хв'],
+          'Здоров’я': ['Випити склянку води', 'Зробити розминку', 'Записатися до лікаря'],
+          'Духовність': ['Записати 3 вдячності', 'Помедитувати', 'Зробити добру справу'],
+          'Саморозвиток': ['Прочитати 5 сторінок', 'Виписати інсайт', 'Повчити слова']
+        }
+      },
+      en: {
+        appTitleMain: 'Life', appTitleSub: 'Wheel',
+        tab1: '📊 Wheel', tab2: '📝 Tasks', tab3: '📅 Calendar',
+        templatePlaceholder: '💡 Or choose from ready ideas...',
+        taskInputPlaceholder: 'Enter task name...',
+        addBtn: 'Add Task',
+        emptyTasks: 'Task list is empty 👍',
+        emptyCalendar: 'No tasks for this date',
+        emptyHistory: 'No completed tasks for this period',
+        calSelectedTitle: 'Tasks for selected date:',
+        calHistoryTitle: 'Completed tasks history:',
+        checkTitle: 'Mark as completed',
+        langBtn: 'UA',
+        loginText: 'Sign In',
+        delModalTitle: 'Delete Task',
+        delModalText: 'Are you sure you want to delete this task?',
+        delCancelBtn: 'Cancel',
+        delConfirmBtn: 'Delete',
+        sphereCloseBtn: 'Got it',
+        welcomePrompt: "Enter your name (to display in header):",
+        welcomeBtn: 'Continue',
+        histOpt7Days: '🗓 Last 7 days',
+        histOptMonth: '📊 Last month',
+        histOpt3Months: '⏳ Last 3 months',
+        histOpt6Months: '📈 Last 6 months',
+        histOptYear: '🏆 Last year',
+        categories: ['Work', 'Family', 'Friends', 'Hobbies', 'Rest', 'Health', 'Spirituality', 'Growth'],
+        descriptions: [
+          { name: '1. Work & Career', desc: 'Professional self-realization and social demand.' },
+          { name: '2. Family & Close Ones', desc: 'Zone of emotional safety, love, and deep attachment.' },
+          { name: '3. Friends & Environment', desc: 'Social circle of like-minded people and mutual support.' },
+          { name: '4. Hobbies & Creativity', desc: 'Activities from the "WANT" component providing dopamine resource.' },
+          { name: '5. Rest & Recovery', desc: 'Psychohygienes and prevention of emotional burnout.' },
+          { name: '6. Health & Body', desc: 'Sleep, nutrition, sports, and attention to body signals.' },
+          { name: '7. Spirituality & Meaning', desc: 'Sense of purpose and answers to existential questions.' },
+          { name: '8. Self-Development & Growth', desc: 'Learning new things, broadening horizons, and mindset work.' }
+        ],
+        templates: {
+          'Work': ['Clear desktop', 'Set 3 priorities', 'Log achievement'],
+          'Family': ['Text a loved one', 'Device-free quality time', 'Thank relatives'],
+          'Friends': ['Send a memory to a friend', 'Plan a meetup', 'Check-in on someone'],
+          'Hobbies': ['Spend 10 min on hobby', 'Watch a tutorial', 'Order supplies'],
+          'Rest': ['Digital detox for 10 min', 'Spend time in silence', 'Sleep 30 min earlier'],
+          'Health': ['Drink a glass of water', 'Do stretching', 'Book a doctor appointment'],
+          'Spirituality': ['Write down 3 gratitudes', 'Meditate', 'Do a good deed'],
+          'Growth': ['Read 5 pages', 'Write down an insight', 'Learn vocabulary']
+        }
+      }
+    };
+
+    let scores = JSON.parse(localStorage.getItem('streletskayaThemeScores')) || [5, 5, 5, 5, 5, 5, 5, 5];
+    
+    let tasksV3 = JSON.parse(localStorage.getItem('streletskayaThemeTasksV3')) || [];
+    let tasksV2 = JSON.parse(localStorage.getItem('streletskayaThemeTasksV2')) || [];
+    let taskMap = new Map();
+    [...tasksV2, ...tasksV3].forEach(t => { if(t && t.id) taskMap.set(t.id, t); });
+    let taskList = Array.from(taskMap.values());
+    localStorage.setItem('streletskayaThemeTasksV3', JSON.stringify(taskList));
+
+    let currentCalDate = new Date();
+    let selectedCalDayStr = new Date().toISOString().split('T')[0];
+    let historyFilterMode = '7days';
+    let taskToDeleteId = null;
+
+    let wheelChart = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('taskDueDate').value = selectedCalDayStr;
+
+      const ctx = document.getElementById('wheelChart').getContext('2d');
+      wheelChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: translations[currentLang].categories,
+          datasets: [{
+            label: 'Рівень', data: scores,
+            backgroundColor: 'rgba(55, 151, 240, 0.35)',
+            borderColor: '#3797f0', borderWidth: 2, pointBackgroundColor: '#3797f0'
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              min: 0, max: 10, ticks: { display: false },
+              grid: { color: 'rgba(255, 255, 255, 0.25)' },
+              angleLines: { color: 'rgba(255, 255, 255, 0.25)' },
+              pointLabels: { color: '#ffffff', font: { size: 12, weight: 'bold' } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      applyTheme();
+
+      if (!localStorage.getItem('streletskayaVisited')) {
+        document.getElementById('welcomeModal').classList.add('show');
+      } else {
+        applyLanguage();
+      }
+    });
+
+    function applySmoothTransition(updateCallback) {
+      document.body.classList.add('is-blur');
+      setTimeout(() => {
+        updateCallback();
+        setTimeout(() => { document.body.classList.remove('is-blur'); }, 80);
+      }, 250);
+    }
+
+    let tempChosenLang = 'ua';
+    window.setInitialLang = function(lang) {
+      tempChosenLang = lang;
+      document.getElementById('langUaBtn').style.background = lang === 'ua' ? 'var(--accent-color)' : 'var(--card-sub-bg)';
+      document.getElementById('langUaBtn').style.color = lang === 'ua' ? '#fff' : 'var(--text-color)';
+      document.getElementById('langUaBtn').style.border = lang === 'ua' ? 'none' : '1px solid var(--border-color)';
+      
+      document.getElementById('langEnBtn').style.background = lang === 'en' ? 'var(--accent-color)' : 'var(--card-sub-bg)';
+      document.getElementById('langEnBtn').style.color = lang === 'en' ? '#fff' : 'var(--text-color)';
+      document.getElementById('langEnBtn').style.border = lang === 'en' ? 'none' : '1px solid var(--border-color)';
+    };
+
+    window.saveWelcomeSettings = function() {
+      const nameInput = document.getElementById('welcomeNameInput').value.trim();
+      if (nameInput) {
+        localStorage.setItem('streletskayaCustomName', nameInput);
+        document.getElementById('authBtnText').innerText = nameInput;
+      }
+      currentLang = tempChosenLang;
+      localStorage.setItem('appLang', currentLang);
+      localStorage.setItem('streletskayaVisited', 'true');
+      document.getElementById('welcomeModal').classList.remove('show');
+      applyLanguage();
+    };
+
+    window.openSphereInfo = function(index) {
+      const t = translations[currentLang];
+      const sphereData = t.descriptions[index];
+      if (sphereData) {
+        document.getElementById('sphereModalTitle').innerText = sphereData.name;
+        document.getElementById('sphereModalDesc').innerText = sphereData.desc;
+        document.getElementById('sphereCloseBtn').innerText = t.sphereCloseBtn;
+        document.getElementById('sphereInfoModal').classList.add('show');
+      }
+    };
+
+    window.closeSphereModal = function() {
+      document.getElementById('sphereInfoModal').classList.remove('show');
+    };
+
+    window.promptDeleteTask = function(taskId) {
+      taskToDeleteId = taskId;
+      document.getElementById('deleteConfirmModal').classList.add('show');
+    };
+
+    window.closeDeleteModal = function() {
+      taskToDeleteId = null;
+      document.getElementById('deleteConfirmModal').classList.remove('show');
+    };
+
+    window.confirmDeleteTask = function() {
+      if (taskToDeleteId) {
+        taskList = taskList.filter(t => t.id !== taskToDeleteId);
+        renderTasksTab();
+        window.saveUserData(scores, taskList);
+      }
+      closeDeleteModal();
+    };
+
+    window.openTab = function(evt, tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      evt.currentTarget.classList.add('active');
+    };
+
+    window.toggleTheme = function() {
+      applySmoothTransition(() => {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('appTheme', currentTheme);
+        applyTheme();
+      });
+    };
+
+    function applyTheme() {
+      if (currentTheme === 'light') {
+        document.body.classList.add('light-theme');
+        document.getElementById('themeBtn').innerText = '☀️';
+      } else {
+        document.body.classList.remove('light-theme');
+        document.getElementById('themeBtn').innerText = '🌙';
+      }
+      updateChartColors();
+    }
+
+    window.toggleLanguage = function() {
+      applySmoothTransition(() => {
+        currentLang = currentLang === 'ua' ? 'en' : 'ua';
+        localStorage.setItem('appLang', currentLang);
+        applyLanguage();
+      });
+    };
+
+    function applyLanguage() {
+      const t = translations[currentLang];
+      document.getElementById('appTitleMain').innerText = t.appTitleMain;
+      document.getElementById('appTitleSub').innerText = t.appTitleSub;
+      document.getElementById('tab1').innerText = t.tab1;
+      document.getElementById('tab2').innerText = t.tab2;
+      document.getElementById('tab3').innerText = t.tab3;
+      document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
+      document.getElementById('addBtn').innerText = t.addBtn;
+      document.getElementById('langBtn').innerText = t.langBtn;
+      document.getElementById('calSelectedDateTitle').innerText = t.calSelectedTitle;
+      document.getElementById('calHistoryTitle').innerText = t.calHistoryTitle;
+
+      if (!localStorage.getItem('streletskayaCustomName')) {
+        document.getElementById('authBtnText').innerText = t.loginText;
+      }
+
+      document.getElementById('histOpt7Days').innerText = t.histOpt7Days;
+      document.getElementById('histOptMonth').innerText = t.histOptMonth;
+      document.getElementById('histOpt3Months').innerText = t.histOpt3Months;
+      document.getElementById('histOpt6Months').innerText = t.histOpt6Months;
+      document.getElementById('histOptYear').innerText = t.histOptYear;
+
+      document.getElementById('delModalTitle').innerText = t.delModalTitle;
+      document.getElementById('delModalText').innerText = t.delModalText;
+      document.getElementById('delCancelBtn').innerText = t.delCancelBtn;
+      document.getElementById('delConfirmBtn').innerText = t.delConfirmBtn;
+      document.getElementById('sphereCloseBtn').innerText = t.sphereCloseBtn;
+
+      if (wheelChart) {
+        wheelChart.data.labels = t.categories;
+        wheelChart.update();
+      }
+      updateSlidersAndChart();
+
+      const select = document.getElementById('taskCategorySelect');
+      const selectedIndex = select.value || 0;
+      select.innerHTML = '';
+      t.categories.forEach((cat, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx; opt.textContent = cat;
+        select.appendChild(opt);
+      });
+      select.value = selectedIndex;
+      renderTasksTab();
+    }
+
+    window.updateSlidersAndChart = function() {
+      const t = translations[currentLang];
+      const slidersContainer = document.getElementById('slidersContainer');
+      slidersContainer.innerHTML = '';
+      t.categories.forEach((cat, index) => {
+        const group = document.createElement('div');
+        group.className = 'slider-group';
+        group.innerHTML = `
+          <label onclick="openSphereInfo(${index})" title="Натисніть, щоб прочитати опис сфери">${cat}</label>
+          <input type="range" min="1" max="10" value="${scores[index]}" oninput="updateScore(${index}, this.value)">
+          <span id="val-${index}">${scores[index]}</span>
+        `;
+        slidersContainer.appendChild(group);
+      });
+      if (wheelChart) {
+        wheelChart.data.datasets[0].data = scores;
+        wheelChart.update();
+      }
+    };
+
+    function updateChartColors() {
+      if (!wheelChart) return;
+      const isLight = currentTheme === 'light';
+      wheelChart.options.scales.r.pointLabels.color = isLight ? '#121212' : '#ffffff';
+      wheelChart.options.scales.r.grid.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
+      wheelChart.options.scales.r.angleLines.color = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.25)';
+      wheelChart.update();
+    }
+
+    window.updateScore = function(index, value) {
+      scores[index] = Number(value);
+      document.getElementById(`val-${index}`).innerText = value;
+      if (wheelChart) {
+        wheelChart.data.datasets[0].data = scores;
+        wheelChart.update();
+      }
+      window.saveUserData(scores, taskList);
+    };
+
+    window.updateTemplates = function() {
+      const t = translations[currentLang];
+      const categoryIndex = document.getElementById('taskCategorySelect').value || 0;
+      const categoryName = t.categories[categoryIndex];
+      const templateSelect = document.getElementById('templateSelect');
+      templateSelect.innerHTML = `<option value="">${t.templatePlaceholder}</option>`;
+      if (t.templates[categoryName]) {
+        t.templates[categoryName].forEach(tmpl => {
+          const opt = document.createElement('option');
+          opt.value = tmpl; opt.textContent = tmpl;
+          templateSelect.appendChild(opt);
+        });
+      }
+    };
+
+    window.applyTemplate = function() {
+      const templateSelect = document.getElementById('templateSelect');
+      const taskInput = document.getElementById('taskInput');
+      if (templateSelect.value) taskInput.value = templateSelect.value;
+    };
+
+    window.addTask = function() {
+      const catIdx = document.getElementById('taskCategorySelect').value || 0;
+      const input = document.getElementById('taskInput');
+      const dateVal = document.getElementById('taskDueDate').value || new Date().toISOString().split('T')[0];
+      const text = input.value.trim();
+      if (!text) return;
+
+      const newTask = {
+        id: Date.now().toString(),
+        text: text,
+        catIndex: Number(catIdx),
+        completed: false,
+        createdAt: dateVal,
+        completedAt: null
+      };
+
+      taskList.push(newTask);
+      input.value = '';
+      document.getElementById('templateSelect').value = '';
+      renderTasksTab();
+      window.saveUserData(scores, taskList);
+    };
+
+    window.toggleTask = function(taskId) {
+      const task = taskList.find(t => t.id === taskId);
+      if (task) {
+        task.completed = !task.completed;
+        task.completedAt = task.completed ? new Date().toISOString().split('T')[0] : null;
+        renderTasksTab();
+        window.saveUserData(scores, taskList);
+      }
+    };
+
+    function renderTasksTab() {
+      updateTemplates();
+      renderActiveTasks();
+      renderCalendarView();
+    }
+
+    function renderActiveTasks() {
+      const listEl = document.getElementById('activeTaskList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      const t = translations[currentLang];
+      const activeList = taskList.filter(t => !t.completed);
+
+      if (activeList.length === 0) {
+        listEl.innerHTML = `<li style="font-size:13px; color:var(--subtext-color); text-align:center; padding:15px;">${t.emptyTasks}</li>`;
+        return;
+      }
+
+      activeList.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = `
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
+          <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    window.changeMonth = function(delta) {
+      currentCalDate.setMonth(currentCalDate.getMonth() + delta);
+      renderCalendarView();
+    };
+
+    function renderCalendarView() {
+      const year = currentCalDate.getFullYear();
+      const month = currentCalDate.getMonth();
+      const t = translations[currentLang];
+      const monthNames = currentLang === 'ua' 
+        ? ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
+        : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      
+      const monthYearEl = document.getElementById('calMonthYear');
+      if (monthYearEl) monthYearEl.innerText = `${monthNames[month]} ${year}`;
+      
+      const grid = document.getElementById('calendarGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const dayHeads = currentLang === 'ua' ? ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      dayHeads.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'cal-day-head'; div.innerText = d;
+        grid.appendChild(div);
+      });
+
+      const firstDayIdx = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDayIdx; i++) grid.appendChild(document.createElement('div'));
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const div = document.createElement('div');
+        div.className = `cal-day ${dateStr === selectedCalDayStr ? 'active' : ''}`;
+        
+        if (taskList.some(t => t.createdAt === dateStr || t.completedAt === dateStr)) {
+          div.classList.add('has-done');
+        }
+
+        div.innerText = day;
+        div.onclick = () => { selectedCalDayStr = dateStr; renderCalendarView(); };
+        grid.appendChild(div);
+      }
+
+      const dayTasks = taskList.filter(t => t.createdAt === selectedCalDayStr || t.completedAt === selectedCalDayStr);
+      const listEl = document.getElementById('calendarTaskList');
+      if (listEl) {
+        listEl.innerHTML = '';
+        if (dayTasks.length === 0) {
+          listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyCalendar}</li>`;
+        } else {
+          dayTasks.forEach(task => {
+            const li = document.createElement('li');
+            li.className = `task-item ${task.completed ? 'completed' : ''}`;
+            li.innerHTML = `
+              <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+              <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+              <span class="task-text" onclick="toggleTask('${task.id}')" style="cursor:pointer;">${task.text}</span>
+              <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
+            `;
+            listEl.appendChild(li);
+          });
+        }
+      }
+
+      renderCalendarHistory(historyFilterMode);
+    }
+
+    window.renderCalendarHistory = function(mode) {
+      historyFilterMode = mode;
+      const listEl = document.getElementById('historyTaskList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      const t = translations[currentLang];
+      
+      let completedTasks = taskList.filter(t => t.completed && t.completedAt);
+      const now = new Date();
+
+      if (mode === '7days') {
+        const limitDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === 'month') {
+        const limitDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === '3months') {
+        const limitDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === '6months') {
+        const limitDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      } else if (mode === 'year') {
+        const limitDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        completedTasks = completedTasks.filter(t => new Date(t.completedAt) >= limitDate);
+      }
+
+      if (completedTasks.length === 0) {
+        listEl.innerHTML = `<li style="font-size:12px; color:var(--subtext-color); text-align:center; padding:10px;">${t.emptyHistory}</li>`;
+        return;
+      }
+
+      completedTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'task-item completed';
+        li.innerHTML = `
+          <button class="check-btn" onclick="toggleTask('${task.id}')" title="${t.checkTitle}">✓</button>
+          <span class="task-cat-badge">${t.categories[task.catIndex]}</span>
+          <span class="task-text">${task.text} (${task.completedAt})</span>
+          <button class="delete-btn" onclick="promptDeleteTask('${task.id}')">&times;</button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
