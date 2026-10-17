@@ -126,25 +126,26 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       margin: 0; padding: 12px; box-sizing: border-box;
-      /* Плавные переходы для темы */
-      transition: background-color 0.4s ease, color 0.4s ease;
+      transition: background-color 0.5s ease, color 0.5s ease;
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Эффект блюра при смене языка или темы */
+    /* Премиальный эффект блюра при старте, смене темы и языка */
     body.is-blur {
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      opacity: 0.75;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      opacity: 0.4;
       pointer-events: none;
-      transition: backdrop-filter 0.2s ease, opacity 0.2s ease;
+      transform: scale(0.99);
+      transition: backdrop-filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
     }
 
     body {
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);
       opacity: 1;
-      transition: backdrop-filter 0.3s ease, opacity 0.3s ease, background-color 0.4s ease, color 0.4s ease;
+      transform: scale(1);
+      transition: backdrop-filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease, background-color 0.5s ease, color 0.5s ease;
     }
     
     .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -247,9 +248,42 @@
     .cal-day { padding: 8px 0; border-radius: 6px; background: var(--card-sub-bg); cursor: pointer; position: relative; transition: background 0.3s; }
     .cal-day.active { background: var(--accent-color); color: #fff; font-weight: bold; }
     .cal-day.has-done::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--success-color); border-radius: 50%; }
+
+    /* Модальное окно Путеводителя (Onboarding) */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 16px; box-sizing: border-box;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 16px; width: 100%; max-width: 360px; padding: 20px;
+      box-sizing: border-box; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .modal-card h3 { color: var(--accent-color); margin-top: 0; font-size: 18px; }
+    .modal-card p { font-size: 13px; line-height: 1.5; color: var(--text-color); margin-bottom: 20px; }
+    .modal-steps { font-size: 11px; color: var(--subtext-color); margin-bottom: 12px; font-weight: bold; }
+    .modal-buttons { display: flex; gap: 8px; }
   </style>
 </head>
 <body>
+
+  <!-- Путеводитель / Онбординг (КПТ-гид) -->
+  <div class="modal-overlay" id="onboardingModal">
+    <div class="modal-card">
+      <div class="modal-steps" id="onboardingStepIndicator">Шаг 1 из 3</div>
+      <h3 id="onboardingTitle">Заголовок</h3>
+      <p id="onboardingText">Текст объяснения...</p>
+      <div class="modal-buttons">
+        <button class="btn-toggle" style="flex:1; padding: 10px;" id="onboardingSkipBtn" onclick="closeOnboarding()">Пропустить</button>
+        <button class="primary-btn" style="flex:1; margin-bottom:0;" id="onboardingNextBtn" onclick="nextOnboardingStep()">Далее</button>
+      </div>
+    </div>
+  </div>
 
   <div class="header-bar">
     <span style="font-weight: bold; font-size: 14px;" id="appTitle">📊 Колесо Баланса</span>
@@ -277,6 +311,9 @@
 
   <!-- Описание -->
   <div id="infoTab" class="tab-content">
+    <div style="margin-bottom: 12px;">
+      <button class="primary-btn" onclick="showOnboarding(true)" id="guideBtn">📖 Открыть путеводитель (КПТ)</button>
+    </div>
     <div id="infoCardsContainer"></div>
   </div>
 
@@ -361,8 +398,23 @@
         emptyArchive: 'В архиве пусто',
         calSelectedTitle: 'Задачи на выбранную дату:',
         checkTitle: 'Отметить выполненной',
+        guideBtn: '📖 Открыть путеводитель (КПТ)',
         langBtn: '🌐 UA',
         categories: ['Работа', 'Семья', 'Друзья', 'Хобби', 'Отдых', 'Здоровье', 'Духовность', 'Саморазвитие'],
+        onboarding: [
+          {
+            title: '🧠 Зачем нужно Колесо Баланса?',
+            text: 'С точки зрения КПТ (когнитивно-поведенческой терапии), наш мозг часто зацикливается на одной сфере (например, на работе), упуская другие. Это приводит к когнитивным искажениям и выгоранию. Оценка сфер помогает вернуть объективный взгляд на жизнь.'
+          },
+          {
+            title: '🎯 Синдром "всё или ничего"',
+            text: 'Часто мы ставим огромные цели, пугаем мозг и прокрастинируем. Метод микро-шагов (по 5-10 минут) снижает тревогу и активирует дофаминовую систему без перегрузки.'
+          },
+          {
+            title: '📅 Календарь и Архив побед',
+            text: 'Фиксация даже маленьких выполненных шагов в календаре укрепляет новые нейронные связи и объективно доказывает вам, что вы движетесь вперед. Начнем!'
+          }
+        ],
         descriptions: [
           { name: '1. Работа и Карьера', desc: 'Профессиональная самореализация и социальная востребованность.' },
           { name: '2. Семья и Близкие', desc: 'Зона эмоциональной безопасности, любви и глубокой привязанности.' },
@@ -397,8 +449,23 @@
         emptyArchive: 'В архіві порожньо',
         calSelectedTitle: 'Завдання на обрану дату:',
         checkTitle: 'Позначити виконаним',
+        guideBtn: '📖 Відкрити путівник (КПТ)',
         langBtn: '🌐 RU',
         categories: ['Робота', 'Сім’я', 'Друзі', 'Хобі', 'Відпочинок', 'Здоров’я', 'Духовність', 'Саморозвиток'],
+        onboarding: [
+          {
+            title: '🧠 Навіщо потрібне Колесо Балансу?',
+            text: 'З погляду КПТ (когнітивно-поведінкової терапії), наш мозок часто зациклюється на одній сфері (наприклад, роботі), ігноруючи інші. Це викликає вигорання. Оцінка сфер допомагає повернути об’єктивний погляд.'
+          },
+          {
+            title: '🎯 Синдром "все або нічого"',
+            text: 'Часто ми ставимо завеликі цілі, лякаємо мозок і прокрастинуємо. Метод мікро-кроків (по 5-10 хвилин) знижує тривогу та активує дофаминову систему без перевантаження.'
+          },
+          {
+            title: '📅 Календар та Архів перемог',
+            text: 'Фіксація навіть маленьких кроків зміцнює нові нейронні зв’язки та доводить вам, що ви рухаєтеся вперед. Почнімо!'
+          }
+        ],
         descriptions: [
           { name: '1. Робота та Кар’єра', desc: 'Професійна самореалізація та соціальна затребуваність.' },
           { name: '2. Сім’я та Близькі', desc: 'Зона емоційної безпеки, любові та глибокої прив’язаності.' },
@@ -430,17 +497,60 @@
     let selectedCalDayStr = new Date().toISOString().split('T')[0];
     let archiveFilterMode = 'all';
 
+    let onboardingStep = 0;
+
     document.getElementById('taskDueDate').value = selectedCalDayStr;
 
-    // Универсальная функция плавного применения изменений с блюром
+    // Плавный переход с прелестным блюром
     function applySmoothTransition(updateCallback) {
       document.body.classList.add('is-blur');
       setTimeout(() => {
         updateCallback();
         setTimeout(() => {
           document.body.classList.remove('is-blur');
-        }, 50);
-      }, 200);
+        }, 80);
+      }, 250);
+    }
+
+    // Логика путеводителя
+    function checkFirstVisit() {
+      const hasVisited = localStorage.getItem('streletskayaVisited');
+      if (!hasVisited) {
+        showOnboarding(false);
+      }
+    }
+
+    window.showOnboarding = function(manual = true) {
+      onboardingStep = 0;
+      updateOnboardingContent();
+      document.getElementById('onboardingModal').classList.add('show');
+      if (!manual) {
+        localStorage.setItem('streletskayaVisited', 'true');
+      }
+    };
+
+    window.nextOnboardingStep = function() {
+      const t = translations[currentLang];
+      onboardingStep++;
+      if (onboardingStep < t.onboarding.length) {
+        updateOnboardingContent();
+      } else {
+        closeOnboarding();
+      }
+    };
+
+    window.closeOnboarding = function() {
+      document.getElementById('onboardingModal').classList.remove('show');
+    };
+
+    function updateOnboardingContent() {
+      const t = translations[currentLang];
+      const stepData = t.onboarding[onboardingStep];
+      document.getElementById('onboardingStepIndicator').innerText = `${currentLang === 'ru' ? 'Шаг' : 'Крок'} ${onboardingStep + 1} ${currentLang === 'ru' ? 'из' : 'з'} ${t.onboarding.length}`;
+      document.getElementById('onboardingTitle').innerText = stepData.title;
+      document.getElementById('onboardingText').innerText = stepData.text;
+      document.getElementById('onboardingNextBtn').innerText = onboardingStep === t.onboarding.length - 1 ? (currentLang === 'ru' ? 'Начать' : 'Розпочати') : (currentLang === 'ru' ? 'Далее' : 'Далі');
+      document.getElementById('onboardingSkipBtn').innerText = currentLang === 'ru' ? 'Пропустить' : 'Пропустити';
     }
 
     window.openTab = function(evt, tabId) {
@@ -505,6 +615,7 @@
       document.getElementById('taskInput').placeholder = t.taskInputPlaceholder;
       document.getElementById('addBtn').innerText = t.addBtn;
       document.getElementById('langBtn').innerText = t.langBtn;
+      document.getElementById('guideBtn').innerText = t.guideBtn;
 
       document.getElementById('archOptAll').innerText = t.archOptAll;
       document.getElementById('archOptToday').innerText = t.archOptToday;
@@ -828,8 +939,10 @@
       });
     }
 
+    // Инициализация при старте с мягким блюром
     applyTheme();
     applyLanguage();
+    checkFirstVisit();
   </script>
 </body>
 </html>
