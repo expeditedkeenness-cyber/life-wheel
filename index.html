@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Сферы Жизни по Евгении Стрелецкой</title>
+  <title>8 Сфер и Потребностей по Е. Стрелецкой</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -25,10 +25,10 @@
     }
     .tab-btn {
       flex: 1;
-      padding: 10px 5px;
+      padding: 10px 4px;
       border: none;
       background: none;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
       color: #666;
       cursor: pointer;
@@ -44,7 +44,7 @@
     .tab-content.active { display: block; }
 
     .chart-container { position: relative; width: 100%; max-width: 380px; margin: 0 auto; }
-    .slider-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .slider-group { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
     .slider-group label { font-size: 13px; flex: 1; font-weight: 500; }
     .slider-group input { width: 40%; }
     .slider-group span { width: 25px; text-align: right; font-weight: bold; }
@@ -56,10 +56,11 @@
       padding: 12px;
       margin-bottom: 12px;
       border-left: 4px solid #2481cc;
+      cursor: pointer;
     }
-    .info-card h4 { margin: 0 0 6px 0; color: #2481cc; font-size: 15px; }
-    .info-card p { margin: 0 0 6px 0; font-size: 13px; line-height: 1.4; }
-    .info-card .warning { font-size: 12px; color: #d9534f; font-style: italic; }
+    .info-card h4 { margin: 0 0 4px 0; color: #2481cc; font-size: 14px; }
+    .info-card p { margin: 0 0 4px 0; font-size: 12px; line-height: 1.4; color: #333; }
+    .info-card .risk { font-size: 11px; color: #d9534f; font-style: italic; }
 
     /* Вкладка: Задачи */
     select, input[type="text"] {
@@ -97,14 +98,14 @@
 </head>
 <body>
 
-  <!-- Шапка с вкладками -->
+  <!-- Навигация -->
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="openTab('wheelTab')">📊 Колесо</button>
-    <button class="tab-btn" onclick="openTab('infoTab')">📖 Описание</button>
-    <button class="tab-btn" onclick="openTab('tasksTab')">✅ Задачи</button>
+    <button class="tab-btn active" onclick="openTab(event, 'wheelTab')">📊 Диаграмма</button>
+    <button class="tab-btn" onclick="openTab(event, 'infoTab')">📖 8 Сфер</button>
+    <button class="tab-btn" onclick="openTab(event, 'tasksTab')">✅ Задачи</button>
   </div>
 
-  <!-- Вкладка 1: Колесо баланса -->
+  <!-- Вкладка 1: Диаграмма -->
   <div id="wheelTab" class="tab-content active">
     <div class="chart-container">
       <canvas id="wheelChart"></canvas>
@@ -112,27 +113,47 @@
     <div class="sliders" id="slidersContainer" style="margin-top:15px;"></div>
   </div>
 
-  <!-- Вкладка 2: Описание сфер по Стрелецкой -->
+  <!-- Вкладка 2: Описание 8 сфер по Стрелецкой -->
   <div id="infoTab" class="tab-content">
     <div class="info-card">
-      <h4>1. Здоровье и Тело</h4>
-      <p><b>Суть:</b> Сон, полноценное питание, спорт, отдых, регулярный чек-ап и лечение болезней.</p>
-      <div class="warning">⚠️ Риск: Игнорирование тела прямо ведет к депрессии, паническим атакам и астении.</div>
+      <h4>1. Любовь и Принятие</h4>
+      <p>Потребность чувствовать себя нужным, любимым и ценным без необходимости заслуживать любовь.</p>
+      <div class="risk">⚠️ Дефицит: Отвержение, чувство никчемности и глубокая депрессия.</div>
     </div>
     <div class="info-card">
-      <h4>2. Деятельность и Финансы</h4>
-      <p><b>Суть:</b> Профессиональный рост, финансовая независимость, навыки и полезные проекты.</p>
-      <div class="warning">⚠️ Риск: Застой или работа на износ формируют синдром выгорания и выученную беспомощность.</div>
+      <h4>2. Безопасность и Защита</h4>
+      <p>Отсутствие психологического, физического и экономического насилия. Ощущение стабильности.</p>
+      <div class="risk">⚠️ Дефицит: Хроническая тревога, фобии, панические атаки.</div>
     </div>
     <div class="info-card">
-      <h4>3. Близкие отношения</h4>
-      <p><b>Суть:</b> Доверительные партнерские отношения, романтика, безопасность, физическая близость и нежность.</p>
-      <div class="warning">⚠️ Риск: Дефицит близости вызывает эмоциональное одиночество и тревожные привязанности.</div>
+      <h4>3. Внимание и Общение</h4>
+      <p>Качественное совместное время, искренний интерес к вашей личности, душевные разговоры.</p>
+      <div class="risk">⚠️ Дефицит: Одиночество, депривация общения, апатия.</div>
     </div>
     <div class="info-card">
-      <h4>4. Хобби и Досуг</h4>
-      <p><b>Суть:</b> Личные увлечения, эмоции, творчество, отдых без чувства вины («хочу» вместо «надо»).</p>
-      <div class="warning">⚠️ Риск: Без досуга психика лишается естественной дофаминовой подпитки.</div>
+      <h4>4. Физический Контакт</h4>
+      <p>Тактильная близость, объятия, нежность, ласка и комфорт физического присутствия.</p>
+      <div class="risk">⚠️ Дефицит: Тактильный голод, телесные зажимы, психосоматика.</div>
+    </div>
+    <div class="info-card">
+      <h4>5. Эмпатия и Сопереживание</h4>
+      <p>Ваши эмоции слышат, разделяют и валидируют. Вы не остаетесь один на один с болью.</p>
+      <div class="risk">⚠️ Дефицит: Чувство непонимания, изолированность, подавленный гнев.</div>
+    </div>
+    <div class="info-card">
+      <h4>6. Уважение и Признание</h4>
+      <p>Принятие ваших границ, выбора, мнений и успехов со стороны близких и общества.</p>
+      <div class="risk">⚠️ Дефицит: Заниженная самооценка, синдром самозванца, стыд.</div>
+    </div>
+    <div class="info-card">
+      <h4>7. Похвала и Благодарность</h4>
+      <p>Искреннее восхищение вашими действиями и словами, подтверждение вашей ценности.</p>
+      <div class="risk">⚠️ Дефицит: Утрата мотивации, выученная беспомощность.</div>
+    </div>
+    <div class="info-card">
+      <h4>8. Забота и Знаки внимания</h4>
+      <p>Проявление заботы через действия, помощь в быту, подарки и приятно уделенное время.</p>
+      <div class="risk">⚠️ Дефицит: Эмоциональное истощение, ощущение работы «в одну сторону».</div>
     </div>
   </div>
 
@@ -148,17 +169,21 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const categories = ['Здоровье и Тело', 'Деятельность', 'Отношения', 'Хобби и Досуг'];
-    let scores = JSON.parse(localStorage.getItem('streletskayaScores')) || [5, 5, 5, 5];
-    let tasks = JSON.parse(localStorage.getItem('streletskayaTasks')) || {};
+    const categories = [
+      'Любовь', 'Безопасность', 'Внимание', 'Тактильность',
+      'Эмпатия', 'Уважение', 'Похвала', 'Забота'
+    ];
+
+    let scores = JSON.parse(localStorage.getItem('streletskaya8Scores')) || [5, 5, 5, 5, 5, 5, 5, 5];
+    let tasks = JSON.parse(localStorage.getItem('streletskaya8Tasks')) || {};
 
     categories.forEach(cat => { if (!tasks[cat]) tasks[cat] = []; });
 
-    function openTab(tabId) {
+    function openTab(evt, tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
+      evt.currentTarget.classList.add('active');
     }
 
     const ctx = document.getElementById('wheelChart').getContext('2d');
@@ -205,7 +230,7 @@
       document.getElementById(`val-${index}`).innerText = value;
       wheelChart.data.datasets[0].data = scores;
       wheelChart.update();
-      localStorage.setItem('streletskayaScores', JSON.stringify(scores));
+      localStorage.setItem('streletskaya8Scores', JSON.stringify(scores));
     }
 
     function renderTasks() {
@@ -235,19 +260,19 @@
 
       tasks[selectedCat].push({ text, completed: false });
       input.value = '';
-      localStorage.setItem('streletskayaTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskaya8Tasks', JSON.stringify(tasks));
       renderTasks();
     }
 
     function toggleTask(cat, idx) {
       tasks[cat][idx].completed = !tasks[cat][idx].completed;
-      localStorage.setItem('streletskayaTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskaya8Tasks', JSON.stringify(tasks));
       renderTasks();
     }
 
     function deleteTask(cat, idx) {
       tasks[cat].splice(idx, 1);
-      localStorage.setItem('streletskayaTasks', JSON.stringify(tasks));
+      localStorage.setItem('streletskaya8Tasks', JSON.stringify(tasks));
       renderTasks();
     }
 
